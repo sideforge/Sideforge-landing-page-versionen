@@ -63,17 +63,18 @@ assets/img/mark.svg       favicon
 
 The pages are framework-free on purpose so they can be reviewed as-is. To move them into the app: keep `site.css` tokens as the Tailwind theme, turn each film into a client component that mounts `Film` on a `<figure data-film>` in `useEffect`, and keep the shader strings unchanged.
 
-## SideAI hero (`/en/ai`) — the lake scene in 3D
+## SideAI hero (`/en/ai`) — the lake as a paper diorama
 
-The hero on https://sideforge.ch/en/ai keeps its idea — one day at an alpine lake in 60 seconds, with the same four moods — but the painted layers are replaced by a real 3D scene. Nothing else on that page changes.
+The hero on https://sideforge.ch/en/ai keeps its idea, composition and 60 s day, but is now rendered like a handmade diorama shot close up — the tactile, crafted material language of Anthropic's brand films, with SideForge's own motif:
 
-- `ai/index.html` — preview of the hero with the same driver as the site (palettes, sun and moon path, phase buttons, pause) and a **Before / After** switch. Add `?t=22` to jump to a moment, `?v=old` to start on the original.
-- `ai/lake-scene.js` — the new fragment shader (`window.LAKE_REALISTIC`).
-- `ai/lake-original.js` — the current shader, for comparison only.
-- `ai/before-after.jpg` — morning, day, evening, night side by side.
+- watercolour-paper sky, torn-paper mountains with white fibre edges and glued-on snow, a second torn sheet for the ridge
+- scissor-cut spruce hills in felt, tissue-paper clouds, tracing-paper mist
+- a sun cut from card, a paper crescent moon, stars pricked with a needle and lit from behind
+- a lake of crumpled foil that mirrors everything, a felt shore, a folded paper boat, a card train with cut-out windows
+- every layer throws a real shadow on the one behind it, following the sun across the day; moving pieces step like stop-motion
 
-How it is built: a raymarched terrain laid out from the original composition (the range's skyline is the painted one, turned into real height at 4 km; a ridge closes the valley; wooded slopes rise on both sides of the lake), soft shadows, real material colours (spruce forest, rock, snow, water) lit by the hour's sun and sky palette, a lake that reflects the terrain with loop-periodic waves, Fresnel and glitter, a perspective cumulus deck, aerial perspective, low mist on the water, a lit crescent moon, stars, birds, the shooting star, and village lights at the end of the lake after dark. The 60 s loop stays seamless.
+Files: `ai/index.html` (preview with **Before / After** switch; `?t=22` jumps to a moment, `?v=old` starts on the original), `ai/lake-scene.js` (the new shader), `ai/lake-original.js` (current shader, for comparison), `ai/before-after.jpg`.
 
 **Integration:** in the hero component, replace the fragment shader template string (the one that starts with `#ifdef GL_FRAGMENT_PRECISION_HIGH` and declares `uSkyTop`, `uSun`, `uLife`, …) with the contents of `LAKE_REALISTIC`. Uniform names and types are identical, so the JavaScript around it stays as it is.
 
-**Cost:** this shader does far more work per pixel than the flat one. The component already lowers its resolution when frames get slow (down to half), which keeps it smooth on laptops; on very weak devices it will look softer.
+**Cost:** about the same per pixel as the current shader.
