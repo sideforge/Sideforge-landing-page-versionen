@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sintulus 6 — SideForge</title>
+<meta name="description" content="Sintulus 6 is our strongest tier, rebuilt from the ground up — for research with real computation and review, code at its hardest points and work that takes hours rather than minutes.">
+<meta property="og:title" content="Sintulus 6 — SideForge">
+<meta property="og:description" content="Our strongest tier, rebuilt from the ground up. For work that takes hours rather than minutes. Coming end of 2026.">
+<meta property="og:image" content="../assets/video/sintulus-poster.jpg">
+<meta name="theme-color" content="#faf9f7">
+<link rel="icon" href="../assets/img/mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav__in">
+    <a class="logo" href="../" aria-label="SideForge home">
+      <svg viewBox="0 0 92 48" fill="none" aria-hidden="true"><path d="M90 6 L17 6 Q6 6 6 15 Q6 24 17 24 L90 24" stroke="currentColor" stroke-width="11"/><path d="M40 24 Q51 24 51 33 Q51 42 40 42 L6 42" stroke="currentColor" stroke-width="11"/><path d="M66 6 L66 47.5" stroke="currentColor" stroke-width="11"/></svg>
+      sideforge
+    </a>
+    <nav class="nav__links" aria-label="Primary">
+      <a href="https://sideforge.ch/en/ai">SideAI</a>
+      <a href="../venura/">Venura</a>
+      <a href="./">Sintulus</a>
+      <a href="https://sideforge.ch/en/pricing">Pricing</a>
+      <a href="https://sideforge.ch/docs">Docs</a>
+    </nav>
+    <div class="nav__right">
+      <a class="login" href="https://sideforge.ch/dashboard/ai">Log in</a>
+      <a class="btn btn--ink btn--sm" href="https://sideforge.ch/register">Get started free</a>
+      <button class="nav__burger" aria-label="Menu" aria-expanded="false"><span></span></button>
+    </div>
+  </div>
+  <div class="nav__sheet"><div class="wrap">
+    <a href="https://sideforge.ch/en/ai">SideAI</a><a href="../venura/">Venura</a><a href="./">Sintulus</a><a href="https://sideforge.ch/en/pricing">Pricing</a><a href="https://sideforge.ch/dashboard/ai">Log in</a>
+  </div></div>
+</header>
+
+<main id="main">
+  <section class="launch">
+    <div class="wrap launch__grid">
+      <div>
+        <p class="eyebrow launch__date rv"><span class="dot" aria-hidden="true"></span>Preview · Coming end of 2026</p>
+        <h1 class="display launch__title rv" style="--d:.08s">Sintulus 6<small>Our strongest tier, rebuilt for work that takes hours.</small></h1>
+      </div>
+      <ol class="toc rv" style="--d:.16s" aria-label="On this page">
+        <li><a href="#intro"><span>Introduction</span></a></li>
+        <li><a href="#changes"><span>What changes</span></a></li>
+        <li><a href="#surfaces"><span>Where it runs</span></a></li>
+        <li><a href="#availability"><span>Availability and pricing</span></a></li>
+        <li><a href="#roadmap"><span>Roadmap</span></a></li>
+      </ol>
+    </div>
+  </section>
+
+  <div class="wrap film-wrap rv" style="--d:.2s">
+    <figure class="film" data-film="sintulus" aria-label="Short film: a day in orbit around a planet, in four shots — one for each change in Sintulus 6.">
+      <img class="film__poster" src="../assets/video/sintulus-poster.jpg" alt="">
+      <canvas aria-hidden="true"></canvas>
+      <div class="film__shade"></div>
+      <figcaption class="film__caption" aria-live="polite">
+        <span class="n">01 / 04</span>
+        <span class="t">Work that runs for hours</span>
+        <span class="s">Hand it over in the morning, sign it off in the evening. Runs continue when the window is closed.</span>
+      </figcaption>
+      <div class="film__bar">
+        <button class="film__play" type="button" aria-label="Pause film">
+          <svg class="i-pause" viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/></svg>
+          <svg class="i-play" viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1 L11 6 L2.5 11 Z"/></svg>
+        </button>
+        <div class="film__chapters"></div>
+        <span class="film__meta">Live · 32s</span>
+      </div>
+    </figure>
+    <div class="film-note">
+      <span>“A day in orbit” — atmosphere, light and surface computed live in your browser, not a video</span>
+      <a href="../assets/video/sintulus-orbit.mp4" download>Download MP4</a>
+    </div>
+  </div>
+
+  <div class="wrap article">
+    <aside class="article__side" aria-label="Sections">
+      <nav>
+        <a href="#intro">Introduction</a>
+        <a href="#changes">What changes</a>
+        <a href="#surfaces">Where it runs</a>
+        <a href="#availability">Availability and pricing</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#faq">Questions</a>
+      </nav>
+    </aside>
+
+    <div class="article__body">
+      <section id="intro">
+        <p class="lede rv">Sintulus 6 is our strongest tier, rebuilt from the ground up. For research with real computation and review, for code at its hardest points and for work that takes hours rather than minutes.</p>
+        <p class="rv">Sintulus 5 is the tier for tasks where the result has to be right. Sintulus 6 is meant to hold that standard over long stretches: a research question from the dataset to the verified figure, a refactor across a whole project, a task you hand over in the morning and sign off in the evening.</p>
+        <p class="rv">To do that it does not work alone. A plan, several specialised steps and a reviewer that holds the result against the log — visible, traceable, stoppable.</p>
+        <p class="pull rv">A task you hand over in the morning and sign off in the evening.</p>
+
+        <dl class="specs rv">
+          <div><dt>Status</dt><dd><span class="live">In progress</span></dd></div>
+          <div><dt>Release</dt><dd>End of 2026</dd></div>
+          <div><dt>Replaces</dt><dd>Sintulus 5</dd></div>
+          <div><dt>Billing</dt><dd>Credits only</dd></div>
+        </dl>
+        <p class="fine rv">Preview. Scope and dates may still change before launch.</p>
+        <p class="rv" style="margin-top:28px">
+          <a class="btn btn--ink" href="https://sideforge.ch/en/ai">Use Sintulus 5 now <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 7h11M8 3l4 4-4 4"/></svg></a>
+          &nbsp;
+          <a class="btn btn--line" href="https://sideforge.ch/en/pricing">See pricing</a>
+        </p>
+      </section>
+
+      <section id="changes">
+        <h2 class="rv">What changes</h2>
+        <ol class="caps">
+          <li class="cap">
+            <span class="cap__n">01</span>
+            <div><h3>Work that runs for hours</h3><p>Tasks keep running as their own run even when the window is closed, and check back when they are done or need a decision.</p></div>
+            <svg class="cap__fig" viewBox="0 0 132 88" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+              <path d="M8 70 H 124" opacity=".4"/>
+              <path data-draw d="M14 70 A 52 52 0 0 1 118 70"/>
+              <circle class="acc" cx="66" cy="18" r="4" fill="currentColor" stroke="none"/>
+              <path d="M14 76 V 64 M118 76 V 64" opacity=".6"/>
+            </svg>
+          </li>
+          <li class="cap">
+            <span class="cap__n">02</span>
+            <div><h3>Research with evidence</h3><p>Numbers come from the source and from real Python, never from the model's memory. Every figure carries its provenance.</p></div>
+            <svg class="cap__fig" viewBox="0 0 132 88" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+              <rect x="10" y="10" width="54" height="68" opacity=".5"/>
+              <path d="M18 24 H 54 M18 34 H 48 M18 44 H 52" opacity=".5"/>
+              <path data-draw class="acc" d="M64 44 C 84 44, 84 30, 100 30"/>
+              <circle class="acc" cx="106" cy="30" r="6"/>
+              <path data-draw style="--dd:.8s" d="M92 62 H 124 M92 70 H 116"/>
+            </svg>
+          </li>
+          <li class="cap">
+            <span class="cap__n">03</span>
+            <div><h3>Code across the whole project</h3><p>Changes across many files with a plan, checkpoints and tests — instead of single suggestions you have to piece together yourself.</p></div>
+            <svg class="cap__fig" viewBox="0 0 132 88" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+              <rect x="8" y="8" width="26" height="20" opacity=".5"/><rect x="8" y="36" width="26" height="20" opacity=".5"/><rect x="8" y="64" width="26" height="16" opacity=".5"/>
+              <rect x="98" y="30" width="26" height="28" opacity=".5"/>
+              <path data-draw class="acc" d="M34 18 C 66 18, 66 44, 98 44 M34 46 H 98 M34 72 C 66 72, 66 44, 98 44"/>
+            </svg>
+          </li>
+          <li class="cap">
+            <span class="cap__n">04</span>
+            <div><h3>Spatial understanding</h3><p>Read and create molecules, structures and scenes in 3D — rotatable in the browser, not a flat picture.</p></div>
+            <svg class="cap__fig" viewBox="0 0 132 88" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true">
+              <circle cx="66" cy="44" r="34" opacity=".5"/>
+              <ellipse data-draw cx="66" cy="44" rx="34" ry="11"/>
+              <ellipse data-draw style="--dd:.5s" cx="66" cy="44" rx="13" ry="34"/>
+              <ellipse data-draw class="acc" style="--dd:.9s" cx="66" cy="44" rx="34" ry="22" transform="rotate(-32 66 44)"/>
+            </svg>
+          </li>
+        </ol>
+      </section>
+
+      <section id="surfaces">
+        <h2 class="rv">Where it runs</h2>
+        <p class="rv">Everywhere you pick a model tier today — no separate access and no new keys.</p>
+        <ul class="surfaces rv">
+          <li><a href="https://sideforge.ch/en/ai">Chat <small>Everyday questions, long threads</small><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 11 11 3M5 3h6v6"/></svg></a></li>
+          <li><a href="https://sideforge.ch/en/code">Code <small>Real projects, real terminal</small><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 11 11 3M5 3h6v6"/></svg></a></li>
+          <li><a href="https://sideforge.ch/en/science">Science <small>Databases and a Python chamber</small><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 11 11 3M5 3h6v6"/></svg></a></li>
+          <li><a href="https://sideforge.ch/en/cowork">Cowork <small>Finished files, ready to sign off</small><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 11 11 3M5 3h6v6"/></svg></a></li>
+          <li><a href="https://sideforge.ch/en/developers">Public API <small>Same tier, same key</small><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 11 11 3M5 3h6v6"/></svg></a></li>
+        </ul>
+      </section>
+
+      <section id="availability">
+        <h2 class="rv">Availability and pricing</h2>
+        <p class="rv">Like Sintulus 5, Sintulus 6 runs on credits, not on your plan's included allowance. The price follows the model's cost and will be listed in the console at launch.</p>
+        <p class="rv">Until then Sintulus 5 remains the top tier — anything you build with it today can be carried on with Sintulus 6 later.</p>
+      </section>
+
+      <section id="roadmap">
+        <h2 class="rv">Roadmap</h2>
+        <div class="road">
+          <span class="road__line" data-prog="100%"></span>
+          <ol>
+            <li class="is-done"><span class="when">Today</span><h3>Venura 6</h3><p class="muted">The deep tier for architecture, debugging and long derivations.</p></li>
+            <li class="is-done"><span class="when">End of November 2026</span><h3><a href="../venura/">Venura 6.5</a></h3><p class="muted">Stays on task longer, cleaner tool chains, its own review pass.</p></li>
+            <li class="is-here"><span class="when">End of 2026</span><h3>Sintulus 6</h3><p class="muted">The strongest tier, rebuilt, for work that takes hours.</p></li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="faq">
+        <h2 class="rv">Questions</h2>
+        <div class="faq rv">
+          <details><summary>Do I need a particular plan?<i></i></summary><div class="a"><p>No, only credits. Your plan sets the other tiers and limits; Sintulus is always billed directly against credits.</p></div></details>
+          <details><summary>What happens to Sintulus 5?<i></i></summary><div class="a"><p>It stays selectable for a transition period after launch. We will announce the period at launch.</p></div></details>
+          <details><summary>Why so late in the year?<i></i></summary><div class="a"><p>Because we only release Sintulus 6 once it passes the checks we learned from Sintulus 5. An early date is worth less to us than a model you can trust with long tasks.</p></div></details>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <section class="wrap band">
+    <p class="eyebrow rv" style="margin-bottom:20px">Read next</p>
+    <div class="next">
+      <a class="rv" href="../venura/">
+        <img src="../assets/video/venura-poster.jpg" alt="" loading="lazy">
+        <span class="eyebrow">End of November 2026</span>
+        <h3>Venura 6.5</h3>
+        <p>More stamina on long tasks, cleaner tool chains and its own review pass before every answer.</p>
+        <span class="link-arrow">View <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11 11 3M5 3h6v6"/></svg></span>
+      </a>
+      <a class="rv next--paper" style="--d:.08s" href="https://sideforge.ch/en/ai">
+        <span class="eyebrow">SideAI · Already here today</span>
+        <h3>Everything the new models build on</h3>
+        <p>Chat, Code, Science, Cowork and Design — already running, on real data and real tools.</p>
+        <span class="link-arrow">Explore SideAI <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11 11 3M5 3h6v6"/></svg></span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__grid">
+      <div class="foot__brand">
+        <a class="logo" href="../"><svg viewBox="0 0 92 48" fill="none" aria-hidden="true"><path d="M90 6 L17 6 Q6 6 6 15 Q6 24 17 24 L90 24" stroke="currentColor" stroke-width="11"/><path d="M40 24 Q51 24 51 33 Q51 42 40 42 L6 42" stroke="currentColor" stroke-width="11"/><path d="M66 6 L66 47.5" stroke="currentColor" stroke-width="11"/></svg>sideforge</a>
+        <p>The workshop behind your work. Built and operated by Sideforge AG in Zürich.</p>
+      </div>
+      <div><h4>Product</h4><ul><li><a href="https://sideforge.ch/en#features">Features</a></li><li><a href="https://sideforge.ch/en/security">Security</a></li><li><a href="https://sideforge.ch/en/pricing">Pricing</a></li><li><a href="https://sideforge.ch/en/developers">Developers</a></li><li><a href="https://sideforge.ch/en/auth">SideForge Auth</a></li></ul></div>
+      <div><h4>Models</h4><ul><li><a href="https://sideforge.ch/en/ai">SideAI</a></li><li><a href="../venura/">Venura 6.5</a></li><li><a href="./">Sintulus 6</a></li><li><a href="https://sideforge.ch/en/science">Science</a></li><li><a href="https://sideforge.ch/en/cowork">Cowork</a></li></ul></div>
+      <div><h4>Ecosystem</h4><ul><li><a href="https://cloud.sideforge.ch/cloud">SideForge Cloud</a></li><li><a href="https://quantum.sideforge.ch">Quantum Academy</a></li><li><a href="https://sideforge.ch/en/tunnels">Port Client</a></li><li><a href="https://sideforge.ch/hackforge">HackForge</a></li><li><a href="https://sideforge.ch/sidehub">SideHub</a></li></ul></div>
+      <div><h4>Company</h4><ul><li><a href="https://sideforge.ch/en/impact">Rainforest &amp; Ocean</a></li><li><a href="https://sideforge.ch/en/enterprise">Enterprise</a></li><li><a href="https://sideforge.ch/en/about">About</a></li><li><a href="https://sideforge.ch/blog">Blog</a></li></ul></div>
+      <div><h4>Support</h4><ul><li><a href="https://sideforge.ch/docs">Documentation</a></li><li><a href="https://sideforge.ch/en/support">Support Center</a></li><li><a href="https://sideforge.ch/en/status">System Status</a></li><li><a href="https://sideforge.ch/en/changelog">Changelog</a></li><li><a href="https://sideforge.ch/en/impressum">Imprint</a></li><li><a href="https://sideforge.ch/en/datenschutz">Privacy</a></li></ul></div>
+    </div>
+    <div class="foot__base">
+      <span>© <span data-year>2026</span> Sideforge AG · All rights reserved</span>
+      <span class="status">All systems operational</span>
+      <span class="theme" role="group" aria-label="Theme"><button data-v="auto">Auto</button><button data-v="light">Light</button><button data-v="dark">Dark</button></span>
+    </div>
+  </div>
+</footer>
+
+<script src="../assets/js/film.js"></script>
+<script src="../assets/js/films/sintulus.js"></script>
+<script src="../assets/js/site.js"></script>
+</body>
+</html>
