@@ -60,27 +60,21 @@
   </section>
 
   <div class="wrap film-wrap rv" style="--d:.2s">
-    <figure class="film" data-film="sintulus" aria-label="Short film: a day in orbit around a planet, in four shots — one for each change in Sintulus 6.">
-      <img class="film__poster" src="../assets/video/sintulus-poster.jpg" alt="">
-      <canvas aria-hidden="true"></canvas>
-      <div class="film__shade"></div>
-      <figcaption class="film__caption" aria-live="polite">
-        <span class="n">01 / 04</span>
-        <span class="t">Work that runs for hours</span>
-        <span class="s">Hand it over in the morning, sign it off in the evening. Runs continue when the window is closed.</span>
-      </figcaption>
+    <figure class="film film--ui" data-film="sintulus" aria-label="Short film: four product scenes, one for each change in Sintulus 6.">
+      <div class="film__screen"><img class="film__poster" src="../assets/video/sintulus-poster.jpg" alt=""></div>
       <div class="film__bar">
         <button class="film__play" type="button" aria-label="Pause film">
           <svg class="i-pause" viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/></svg>
           <svg class="i-play" viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1 L11 6 L2.5 11 Z"/></svg>
         </button>
         <div class="film__chapters"></div>
-        <span class="film__meta">Live · 32s</span>
+        <span class="film__meta">Live · 28s</span>
       </div>
+      <figcaption class="film__caption" aria-live="polite"><span class="n">01 / 04</span><span class="t">Work that runs for hours</span><span class="s">Hand it over in the morning, sign it off in the evening. Runs keep going with the window closed and check back when they need you.</span></figcaption>
     </figure>
     <div class="film-note">
-      <span>“A day in orbit” — atmosphere, light and surface computed live in your browser, not a video</span>
-      <a href="../assets/video/sintulus-orbit.mp4" download>Download MP4</a>
+      <span>Played live in your browser — four scenes, one per change</span>
+      <a href="../assets/video/sintulus.mp4" download>Download MP4</a>
     </div>
   </div>
 
@@ -245,6 +239,7 @@
   </div>
 </footer>
 
+<script src="../assets/js/stage.js"></script>
 <script src="../assets/js/film.js"></script>
 <script src="../assets/js/films/sintulus.js"></script>
 <script src="../assets/js/site.js"></script>

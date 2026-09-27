@@ -28,21 +28,21 @@ python3 -m http.server 8000
 
 ## The films
 
-Each page opens with a short film that is **rendered live in the browser** with WebGL — no video download needed, sharp at any size. They are written as fragment shaders; the timeline (chapters, camera paths, cuts) lives in plain JS next to each shader.
+Each page opens with a short product film in the visual language Anthropic uses to present its models — UI cards on soft colour fields (dusty blue, sage, sand, lavender), halftone clouds and fine wave lines behind them, a status pill whose label shimmers while work is in progress, a cursor, a slow camera that moves into the detail. The content is SideForge's own; no footage, frames or compositions are reused.
 
-| Film | File | What it shows |
+The films are HTML, played live in the browser on a fixed 1600×900 stage (sharp at any size, real fonts, no video download). Every frame is a pure function of time, so the player can seek, loop and capture.
+
+| Film | File | Scenes |
 | --- | --- | --- |
-| **Workshop** (home, 20 s) | `assets/js/films/workshop.js` | Five crafts behind the five headline words, each seen up close: a cyanotype drawing that exposes itself line by line (*your next project*), stained cells drifting in a microscope's bright field (*your research*), a city at night from above with traffic moving through the grid (*your services*), a loom weaving many coloured threads into one cloth (*your team*), and a plate of cooling metal in a forge with sparks rising (*the whole workshop*). Scenes change through an iris. |
-| **Relief** (Venura 6.5, 32 s) | `assets/js/films/venura.js` | A flight over an alpine massif in daylight: raymarched terrain with ridged and eroded noise, a summit, a glacial valley with river and lakes, snow by altitude and slope, soft shadows and blue aerial perspective. One shot per capability — a long approach (*stays on task longer*), following the valley (*cleaner tool chains*), circling the summit (*its own review pass*), and a survey line that leaves Swiss-map contour lines behind it (*images and figures*). |
-| **A day in orbit** (Sintulus 6, 32 s) | `assets/js/films/sintulus.js` | A planet with a physically based atmosphere (Rayleigh + Mie single scattering): sunrise over the limb (*work that runs for hours*), a survey grid over the day side (*research with evidence*), a route network lighting up across the night side (*code across the whole project*), and an orbit with a moon passing (*spatial understanding*). |
+| **Home** (22 s) | `assets/js/films/home.js` | Forge IDE writes a page while the live preview builds it · Science loads four databases and computes · one command opens an encrypted tunnel and a shop goes live · a team joins a workspace and everything lands on one invoice · all tools gather around the mark. The headline above ("Everything for …") follows the scene. |
+| **Venura 6.5** (28 s) | `assets/js/films/venura.js` | a Code session reaches its context limit, summarises itself and carries on · a plan ticks off with three well-chosen tool calls instead of nine · a draft is read back against the task, two claims backed, one marked open · a chart is read point by point into a table |
+| **Sintulus 6** (28 s) | `assets/js/films/sintulus.js` | a run lasts from 08:12 to 17:40 and asks for one decision · dots settle into a figure whose parts carry their provenance · one change across the whole project with checkpoints and tests · a molecule assembles from a cloud of points and turns in 3D |
 
-All three are original, procedural scenes written for SideForge; none reuses footage, frames or compositions from other companies' launch videos.
-
-The player (`assets/js/film.js`) adds chapters with progress bars, captions, play/pause, pauses when off-screen, and lowers the render resolution automatically on slower GPUs. Without WebGL the poster image is shown.
+`assets/js/stage.js` holds the building blocks (halftone, waves, pill, cursor, camera, scene cross-fades); `assets/js/film.js` plays them with chapters, captions, play/pause and pauses off-screen.
 
 ### Rendered versions
 
-`assets/video/` holds poster stills and MP4 renders of all three films (for social posts, presentations, or as a download link on the page). They were produced by opening a film with `?capture`, calling `window.__film.renderAt(t)` frame by frame in headless Chromium and piping the frames into ffmpeg (H.264, 24 fps).
+`assets/video/` holds poster stills and MP4 renders of the three films (1600×900, 24 fps), made by opening a film with `?capture`, calling `window.__film.renderAt(t)` frame by frame in headless Chromium and piping the frames into ffmpeg.
 
 ## Structure
 
@@ -53,7 +53,8 @@ sintulus/index.html       Sintulus 6
 assets/css/site.css       design tokens, components, page layouts
 assets/js/site.js         nav, reveals, scroll-spy, theme switch, word-by-word statement
 assets/js/film.js         WebGL film player
-assets/js/films/*.js      the three films (shader + timeline)
+assets/js/stage.js        building blocks for the product films
+assets/js/films/*.js      the three films
 assets/video/             posters, stills, MP4 renders
 assets/img/mark.svg       favicon
 ```

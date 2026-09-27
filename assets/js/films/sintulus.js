@@ -1,202 +1,280 @@
-/* Sintulus 6 — "A day in orbit".
-   A planet seen from low and high orbit: single-scattering atmosphere (Rayleigh + Mie),
-   procedural continents, clouds, ocean glint, night lights, and a survey grid and route
-   network drawn on the surface. Units are kilometres. Four shots, one per capability. */
+/* Sintulus 6 — product film.
+   01 a run that lasts the working day: the clock runs from 08:12 to 17:40, a decision is
+      asked for once, the rest happens with the window closed
+   02 dots settle into a figure, and every part of it carries its provenance
+   03 one change across the whole project: files, checkpoints, tests
+   04 a molecule assembles from a cloud of points and turns in 3D */
 (function () {
-  var frag = [
-    "precision highp float;",
-    "uniform vec2 u_res; uniform float u_time;",
-    "uniform vec3 u_ro; uniform vec3 u_ta; uniform vec3 u_sun; uniform vec3 u_moon;",
-    "uniform float u_rot; uniform float u_grid; uniform float u_net; uniform float u_exp;",
-    "uniform float u_fade; uniform float u_focal;",
-    "const float R=6360.0; const float RA=6470.0; const float HR=9.0; const float HM=1.4;",
-    "const vec3 BR=vec3(5.8e-3,13.5e-3,33.1e-3); const float BM=21e-3;",
-    "const float PI=3.14159265; const float SI=20.0;",
+  var S = window.S, F = window.Film;
+  var DUR = 28, AT = [0, 7, 14, 21];
 
-    "float hash1(float n){return fract(sin(n)*43758.5453123);}",
-    "float hash3(vec3 p){p=fract(p*0.3183099+0.1);p*=17.0;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}",
-    "float n3(vec3 x){vec3 i=floor(x);vec3 f=fract(x);f=f*f*(3.0-2.0*f);",
-    "  return mix(mix(mix(hash3(i),hash3(i+vec3(1,0,0)),f.x),mix(hash3(i+vec3(0,1,0)),hash3(i+vec3(1,1,0)),f.x),f.y),",
-    "             mix(mix(hash3(i+vec3(0,0,1)),hash3(i+vec3(1,0,1)),f.x),mix(hash3(i+vec3(0,1,1)),hash3(i+vec3(1,1,1)),f.x),f.y),f.z);}",
-    "float fbm(vec3 p){float a=0.0,b=0.5;for(int i=0;i<6;i++){a+=b*n3(p);p=p*2.02+vec3(1.7,9.2,3.1);b*=0.5;}return a;}",
-
-    "vec2 sph(vec3 ro,vec3 rd,float r){float b=dot(ro,rd);float c=dot(ro,ro)-r*r;float h=b*b-c;if(h<0.0)return vec2(1e9,-1e9);h=sqrt(h);return vec2(-b-h,-b+h);}",
-    "mat3 rotY(float a){float c=cos(a),s=sin(a);return mat3(c,0.0,s,0.0,1.0,0.0,-s,0.0,c);}",
-    "mat3 rotX(float a){float c=cos(a),s=sin(a);return mat3(1.0,0.0,0.0,0.0,c,s,0.0,-s,c);}",
-
-    // single scattering along the view ray, with planet shadow on the light rays
-    "vec3 scatter(vec3 ro,vec3 rd,float tmax,out vec3 trans){",
-    "  trans=vec3(1.0);",
-    "  vec2 a=sph(ro,rd,RA);if(a.x>a.y||a.y<0.0)return vec3(0.0);",
-    "  float t0=max(a.x,0.0),t1=min(a.y,tmax);float ds=(t1-t0)/14.0;",
-    "  float oR=0.0,oM=0.0;vec3 sR=vec3(0.0),sM=vec3(0.0);",
-    "  for(int i=0;i<14;i++){",
-    "    vec3 p=ro+rd*(t0+ds*(float(i)+0.5));float h=length(p)-R;",
-    "    float hr=exp(-h/HR)*ds,hm=exp(-h/HM)*ds;oR+=hr;oM+=hm;",
-    "    vec2 l=sph(p,u_sun,RA);float dl=l.y/5.0;float lR=0.0,lM=0.0;bool lit=true;",
-    "    for(int j=0;j<5;j++){vec3 q=p+u_sun*(dl*(float(j)+0.5));float hl=length(q)-R;if(hl<0.0){lit=false;break;}lR+=exp(-hl/HR)*dl;lM+=exp(-hl/HM)*dl;}",
-    "    if(lit){vec3 at=exp(-(BR*(oR+lR)+BM*1.1*(oM+lM)));sR+=at*hr;sM+=at*hm;}",
-    "  }",
-    "  float mu=dot(rd,u_sun);float g=0.76;",
-    "  float pR=3.0/(16.0*PI)*(1.0+mu*mu);",
-    "  float pM=3.0/(8.0*PI)*((1.0-g*g)*(1.0+mu*mu))/((2.0+g*g)*pow(1.0+g*g-2.0*g*mu,1.5));",
-    "  trans=exp(-(BR*oR+BM*1.1*oM));",
-    "  return SI*(sR*BR*pR+sM*BM*pM);",
-    "}",
-
-    // great-circle arc between a and b, returns line intensity with a travelling pulse
-    "float arc(vec3 q,vec3 a,vec3 b,float w,float sp){",
-    "  vec3 N=normalize(cross(a,b));float d=abs(dot(q,N));",
-    "  if(dot(cross(a,q),N)<0.0||dot(cross(q,b),N)<0.0)return 0.0;",
-    "  float len=acos(clamp(dot(a,b),-1.0,1.0));float s=acos(clamp(dot(a,q),-1.0,1.0))/len;",
-    "  float pulse=exp(-pow((fract(s-u_time*sp)-0.5)*9.0,2.0));",
-    "  return smoothstep(w,0.0,d)*(0.45+1.2*pulse);",
-    "}",
-    "vec3 ll(float la,float lo){la=radians(la);lo=radians(lo);return vec3(cos(la)*cos(lo),sin(la),cos(la)*sin(lo));}",
-
-    "vec3 surface(vec3 p,vec3 rd,float t,float px){",
-    "  vec3 n=normalize(p);vec3 q=rotY(u_rot)*(rotX(0.95)*n);",
-    "  float c=fbm(q*1.7+vec3(0.0,0.0,4.0))+0.05*n3(q*48.0)+0.025*n3(q*130.0);",
-    "  float land=smoothstep(0.515,0.535,c);",
-    "  float relief=fbm(q*9.0)*0.7+n3(q*38.0)*0.2+n3(q*110.0)*0.1;",
-    "  vec3 lc=mix(vec3(0.07,0.055,0.03),vec3(0.17,0.125,0.065),relief);",
-    "  lc=mix(lc,vec3(0.035,0.055,0.025),smoothstep(0.45,0.7,fbm(q*4.0+2.0))*0.8);",
-    "  vec3 oc=mix(vec3(0.006,0.02,0.05),vec3(0.02,0.06,0.10),smoothstep(0.43,0.515,c));",
-    "  vec3 alb=mix(oc,lc,land);",
-    "  float ice=smoothstep(0.93,0.97,abs(q.y)+0.12*(relief-0.5));alb=mix(alb,vec3(0.32,0.34,0.36),ice);",
-    "  vec3 cq=rotY(u_time*0.004)*q;",
-    "  float cl=fbm(cq*3.2+vec3(fbm(cq*1.5)*1.6));",
-    "  cl=smoothstep(0.47,0.72,cl);",
-    "  float mu=dot(n,u_sun);float dif=max(mu,0.0);",
-    "  vec3 sunc=exp(-(BR*HR+BM*HM*1.1)*1.3/max(mu+0.06,0.02));",
-    "  vec3 col=alb*dif*sunc*SI;",
-    "  vec3 h=normalize(u_sun-rd);float nh=max(dot(n,h),0.0);float spec=(pow(nh,900.0)*0.9+pow(nh,60.0)*0.04)*(1.0-land)*(1.0-cl);",
-    "  col+=sunc*spec*dif*SI;",
-    "  col=mix(col,vec3(0.78)*dif*sunc*SI,cl*0.9);",
-    "  float night=smoothstep(0.06,-0.12,mu);",
-    "  vec3 cc=floor(q*900.0);float city=step(0.93,hash3(cc))*hash3(cc+7.0)*smoothstep(0.55,0.8,n3(q*14.0))*land*(1.0-ice)*(1.0-cl*0.85);",
-    "  col+=vec3(1.0,0.62,0.28)*city*night*min(2.0,0.4/max(px*900.0,0.2));",
-    // survey grid: lines every 15 degrees; px is the angular pixel size on the surface
-    "  float lat=asin(clamp(q.y,-1.0,1.0));float lon=atan(q.z,q.x);float st=PI/12.0;",
-    "  float gl=min(abs(fract(lat/st+0.5)-0.5)*st,abs(fract(lon/st+0.5)-0.5)*st*cos(lat));",
-    "  float grid=smoothstep(px*1.6,px*0.3,gl)*u_grid;",
-    "  col=mix(col,vec3(1.0,0.93,0.8)*(0.6+SI*0.35*dif),grid*0.5);",
-    // route network between clusters
-    "  float w=px*1.3+0.0009;float net=0.0;",
-    "  vec3 A=ll(35.0,-150.0),B=ll(20.0,-112.0),C=ll(-10.0,-132.0),D=ll(4.0,-94.0),E=ll(46.0,-116.0),G=ll(-26.0,-104.0),K=ll(10.0,-166.0);",
-    "  net+=arc(n,A,B,w,0.22)+arc(n,B,D,w,0.18)+arc(n,D,G,w,0.25)+arc(n,G,C,w,0.2)+arc(n,C,A,w,0.16);",
-    "  net+=arc(n,B,E,w,0.21)+arc(n,C,K,w,0.14)+arc(n,K,A,w,0.19)+arc(n,E,A,w,0.23)+arc(n,C,B,w,0.17);",
-    "  vec3 nodes=vec3(0.0);float nd=0.0;",
-    "  nd+=smoothstep(w*4.0,w*1.5,acos(clamp(dot(n,A),-1.0,1.0)))+smoothstep(w*4.0,w*1.5,acos(clamp(dot(n,B),-1.0,1.0)))+smoothstep(w*4.0,w*1.5,acos(clamp(dot(n,C),-1.0,1.0)));",
-    "  nd+=smoothstep(w*4.0,w*1.5,acos(clamp(dot(n,D),-1.0,1.0)))+smoothstep(w*4.0,w*1.5,acos(clamp(dot(n,E),-1.0,1.0)))+smoothstep(w*4.0,w*1.5,acos(clamp(dot(n,G),-1.0,1.0)))+smoothstep(w*4.0,w*1.5,acos(clamp(dot(n,K),-1.0,1.0)));",
-    "  net+=nd*1.2;",
-    "  col+=vec3(0.95,0.5,0.32)*net*u_net*(0.8+1.8*night);",
-    "  return col;",
-    "}",
-
-    "vec3 stars(vec3 rd){",
-    "  vec3 c=vec3(0.0);",
-    "  for(int k=0;k<2;k++){float s=k==0?260.0:620.0;vec3 p=rd*s;vec3 i=floor(p);vec3 f=fract(p)-0.5;",
-    "    float h=hash3(i+float(k)*31.0);if(h>0.965){float b=(h-0.965)/0.035;vec3 o=vec3(hash3(i+1.3),hash3(i+2.7),hash3(i+5.1))-0.5;",
-    "      c+=mix(vec3(1.0,0.85,0.7),vec3(0.75,0.85,1.0),hash3(i+9.0))*b*b*smoothstep(0.22,0.0,length(f-o*0.5))*(k==0?1.2:0.6);}}",
-    "  return c*0.9;",
-    "}",
-
-    "void main(){",
-    "  vec2 q=gl_FragCoord.xy/u_res;",
-    "  vec2 uv=(gl_FragCoord.xy-0.5*u_res)/u_res.y;",
-    "  vec3 ro=u_ro;",
-    "  vec3 ww=normalize(u_ta-ro);vec3 uu=normalize(cross(ww,vec3(0.0,1.0,0.0)));vec3 vv=cross(uu,ww);",
-    "  vec3 rd=normalize(uv.x*uu+uv.y*vv+u_focal*ww);",
-    "  float pxa=1.0/(u_res.y*u_focal);",
-    "  vec2 hp=sph(ro,rd,R);",
-    "  vec3 mc=u_moon;float MR=520.0;vec2 hm=sph(ro-mc,rd,MR);",
-    "  float tmax=1e9;vec3 col=vec3(0.0);bool planet=hp.x>0.0&&hp.x<hp.y;",
-    "  bool moon=hm.x>0.0&&hm.x<hm.y&&(!planet||hm.x<hp.x);",
-    "  if(moon){",
-    "    vec3 p=ro+rd*hm.x;vec3 n=normalize(p-mc);",
-    "    float cr=fbm(n*6.0)*0.6+fbm(n*22.0)*0.4;",
-    "    float dif=max(dot(n,u_sun),0.0);",
-    "    col=vec3(0.26,0.25,0.235)*(0.55+0.6*cr)*dif*SI;tmax=hm.x;",
-    "  }else if(planet){",
-    "    tmax=hp.x;vec3 p=ro+rd*hp.x;",
-    "    col=surface(p,rd,hp.x,hp.x*pxa/R);",
-    "  }else{",
-    "    col=stars(rd);",
-    "    float mu=dot(rd,u_sun);",
-    "    col+=vec3(1.0,0.96,0.9)*(smoothstep(0.99988,0.99995,mu)*400.0+pow(max(mu,0.0),4000.0)*30.0+pow(max(mu,0.0),300.0)*1.2);",
-    "  }",
-    "  vec3 tr;vec3 sc=scatter(ro,rd,tmax,tr);",
-    "  col=col*tr+sc*(planet&&!moon?0.75:1.0);",
-    "  float mu=dot(rd,u_sun);",
-    "  col+=vec3(1.0,0.8,0.55)*pow(max(mu,0.0),40.0)*0.06*tr;",
-    // filmic tone map, vignette, grain
-    "  col=1.0-exp(-col*u_exp);",
-    "  col=pow(col,vec3(0.4545));",
-    "  col*=0.62+0.38*pow(16.0*q.x*q.y*(1.0-q.x)*(1.0-q.y),0.22);",
-    "  col+=(hash3(vec3(gl_FragCoord.xy,fract(u_time)*97.0))-0.5)*0.035;",
-    "  col=mix(col,vec3(0.0),u_fade);",
-    "  gl_FragColor=vec4(clamp(col,0.0,1.0),1.0);",
-    "}"
-  ].join("\n");
-
-  var F = window.Film, L = F.lerp, R = 6360;
-  function nrm(v) { var l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; }
-  function rad(d) { return d * Math.PI / 180; }
+  function scene(stage, bg) { var sc = S.el("div", "sc-scene", stage); sc.style.background = bg; return sc; }
+  function hhmm(m) { var h = Math.floor(m / 60), mm = Math.floor(m % 60); return (h < 10 ? "0" : "") + h + ":" + (mm < 10 ? "0" : "") + mm; }
+  function rnd(i) { var x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
 
   F.define("sintulus", {
-    frag: frag,
-    duration: 32,
-    start: 4.2,
+    duration: DUR,
+    start: 0.6,
+    width: 1600, height: 900,
     chapters: [
-      { t: 0, n: "01", title: "Work that runs for hours", text: "Hand it over in the morning, sign it off in the evening. Runs continue when the window is closed." },
-      { t: 8, n: "02", title: "Research with evidence", text: "Numbers come from the source and from real Python, never from memory. Every figure carries its provenance." },
-      { t: 16, n: "03", title: "Code across the whole project", text: "Changes across many files with a plan, checkpoints and tests — not single suggestions to piece together." },
-      { t: 24, n: "04", title: "Spatial understanding", text: "Molecules, structures and scenes in 3D — rotatable in the browser, not a flat picture." }
+      { t: 0, n: "01", title: "Work that runs for hours", text: "Hand it over in the morning, sign it off in the evening. Runs keep going with the window closed and check back when they need you." },
+      { t: 7, n: "02", title: "Research with evidence", text: "Numbers come from the source and from real Python, never from memory. Every figure carries its provenance." },
+      { t: 14, n: "03", title: "Code across the whole project", text: "Changes across many files with a plan, checkpoints and tests — not single suggestions to piece together." },
+      { t: 21, n: "04", title: "Spatial understanding", text: "Molecules, structures and scenes in 3D — rotatable in the browser, not a flat picture." }
     ],
-    uniforms: function (t) {
-      var ro, ta, sun, grid = 0, net = 0, ex = 0.35, rot = 0.6 + t * 0.012, moon = [1e6, 0, 0], p;
-      if (t < 8) {
-        // low orbit, looking at the limb while the sun comes up behind it
-        p = t / 8;
-        var alt = 420, dip = rad(L(12.5, 13.5, p));
-        ro = [0, R + alt, 0];
-        ta = [0, R + alt - Math.sin(dip) * 1000, Math.cos(dip) * 1000];
-        var e = rad(L(-24.5, -17.5, F.ease(p)));
-        sun = nrm([0.16, Math.sin(e), Math.cos(e)]);
-        ex = L(0.9, 0.42, p);
-      } else if (t < 16) {
-        p = (t - 8) / 8;
-        ro = [L(-1600, 1400, p), R + 2400, -2600];
-        ta = [L(-500, 500, p), R - 500, 1200];
-        sun = nrm([-0.55, 0.72, 0.25]);
-        grid = F.ease(Math.min(1, p * 1.6));
-        rot = 0.9 + t * 0.01;
-        ex = 0.3;
-      } else if (t < 24) {
-        p = (t - 16) / 8;
-        var d = L(15500, 25500, F.ease(p));
-        var dir = nrm([-0.28, 0.32, -1]);
-        ro = [dir[0] * d, dir[1] * d, dir[2] * d];
-        ta = [0, 0, 0];
-        sun = nrm([1, 0.18, 0.1]);
-        net = F.ease(Math.min(1, p * 1.4));
-        ex = 0.34;
-      } else {
-        p = (t - 24) / 8;
-        var a = L(-0.55, 0.45, p), dist = 23000;
-        ro = [Math.sin(a) * dist, 5200, -Math.cos(a) * dist];
-        ta = [0, 0, 0];
-        sun = nrm([-0.7, 0.3, -0.62]);
-        moon = [4200, 3000, -11500];
-        grid = 0.55;
-        net = 0.5;
-        ex = 0.28;
-      }
-      return {
-        u_ro: ro, u_ta: ta, u_sun: sun, u_moon: moon, u_rot: rot,
-        u_grid: grid, u_net: net, u_exp: ex, u_focal: 1.55,
-        u_fade: F.cut(t, [0, 8, 16, 24, 32], 0.4)
+    build: function (stage) {
+      var parts = [];
+
+      /* ---------------------------------------------------------------- 01 */
+      (function () {
+        var sc = scene(stage, "#c8d5e5");
+        var ht = S.halftone(sc, { blobs: [{ x: 360, y: 700, r: 420 }, { x: 1300, y: 200, r: 380 }], inner: [228, 128, 100], outer: [240, 190, 176] });
+        var w = S.el("div", "sc-world", sc);
+        var card = S.el("div", "sc-card", w);
+        Object.assign(card.style, { left: "260px", top: "140px", width: "960px", height: "620px" });
+        card.innerHTML =
+          '<div class="sc-bar">Run · Move billing to francs<span class="sp"></span><span class="sc-tag sc-tag--clay">Sintulus 6</span></div>' +
+          '<div style="display:flex;align-items:baseline;gap:22px;padding:34px 44px 10px"><span class="clock sc-serif" style="font-size:92px;letter-spacing:-.02em">08:12</span><span class="state" style="font-size:22px;color:#6b665f">running</span></div>' +
+          '<div style="position:relative;margin:24px 44px 0;height:120px"><div class="sc-meter" style="position:absolute;left:0;right:0;top:40px;height:12px"><b class="fill"></b></div><div class="ticks"></div><div class="marks"></div></div>' +
+          '<div class="feed" style="position:absolute;left:0;right:0;bottom:0"></div>';
+        var ticks = card.querySelector(".ticks"), marks = card.querySelector(".marks");
+        for (var h = 8; h <= 18; h += 2) S.el("span", "sc-mono", ticks, (h < 10 ? "0" : "") + h + ":00").setAttribute("style", "position:absolute;top:70px;left:" + ((h - 8) / 10 * 100) + "%;transform:translateX(-50%);font-size:17px;color:#9a958d");
+        var ms = [["Plan", 8.4], ["Checkpoint 1", 10.3], ["Checkpoint 2", 13.1], ["Tests", 15.6], ["Review", 17.2]].map(function (m) {
+          var e = S.el("div", "", marks);
+          e.setAttribute("style", "position:absolute;top:0;left:" + ((m[1] - 8) / 10 * 100) + "%;transform:translateX(-50%);text-align:center");
+          e.innerHTML = '<div style="font-size:16px;color:#6b665f;white-space:nowrap;margin-bottom:8px">' + m[0] + '</div><div style="width:16px;height:16px;border-radius:50%;background:#fff;border:4px solid #d97757;margin:0 auto"></div>';
+          return [e, m[1]];
+        });
+        var feed = card.querySelector(".feed");
+        var f1 = S.el("div", "sc-row", feed, '<span class="sc-ico" style="background:#2a2d3a">◐</span><span>Window closed — the run carries on in the background</span><small>09:05</small>');
+        var f2 = S.el("div", "sc-row", feed, '<span class="sc-check on"></span><span>Checkpoint 2 · 38 files changed, 211 tests green</span><small>13:10</small>');
+        var toast = S.el("div", "sc-card", w);
+        Object.assign(toast.style, { left: "1010px", top: "250px", width: "480px", padding: "28px 30px" });
+        toast.innerHTML = '<div style="display:flex;align-items:center;gap:12px;font-size:19px;color:#946214;margin-bottom:12px"><span class="sc-tag sc-tag--amber">Needs a decision</span>11:47</div>' +
+          '<div class="sc-serif" style="font-size:30px;line-height:1.3;margin-bottom:22px">Keep the old rounding for invoices issued before 2025?</div>' +
+          '<div style="display:flex;gap:12px"><span class="keep" style="padding:12px 22px;border-radius:10px;background:#1d1c1a;color:#fff;font-size:21px;font-weight:500">Keep</span><span style="padding:12px 22px;border-radius:10px;border:1px solid #d9d5ce;font-size:21px">Change</span></div>';
+        var keep = toast.querySelector(".keep");
+        var cur = S.cursor(w);
+        var pill = S.pill(sc);
+        Object.assign(pill.el.style, { left: "50%", top: "800px", marginLeft: "-210px" });
+        var clock = card.querySelector(".clock"), state = card.querySelector(".state"), fill = card.querySelector(".fill");
+        var cam = S.camera(w, 1600, 900, [{ t: 0, x: 740, y: 430, s: 1.1 }, { t: 3.0, x: 900, y: 420, s: 1.02 }, { t: 4.4, x: 1150, y: 400, s: 1.12 }, { t: 7, x: 800, y: 450, s: 0.98 }]);
+        var curKeys = [{ t: 3.2, x: 1500, y: 700 }, { t: 3.9, x: 1080, y: 500, click: 4.0 }, { t: 4.6, x: 1080, y: 500 }, { t: 5.4, x: 1560, y: 840 }];
+        curKeys.vis = function (t) { return S.lin(t, 3.2, 3.4) * (1 - S.lin(t, 5.0, 5.4)); };
+        parts.push(function (t) {
+          ht(t); cam(t);
+          var p = S.io(S.lin(t, 0.4, 5.8));
+          var mins = S.lerp(8 * 60 + 12, 17 * 60 + 40, p);
+          var s = hhmm(mins); if (clock.__t !== s) { clock.textContent = s; clock.__t = s; }
+          fill.style.transform = "scaleX(" + ((mins / 60 - 8) / 10).toFixed(4) + ")";
+          ms.forEach(function (m) { var k = S.out(S.lin(mins / 60, m[1] - 0.15, m[1] + 0.2)); m[0].style.opacity = k.toFixed(3); m[0].style.transform = "translateX(-50%) scale(" + (0.7 + 0.3 * k) + ")"; });
+          S.show(f1, t, 1.0, 1.4); S.show(f2, t, 2.6, 3.0);
+          f1.style.transform += " translateY(-" + (S.io(S.lin(t, 2.6, 3.0)) * 0) + "px)";
+          S.show(toast, t, 3.0, 3.5, 4.3, 4.8, 40);
+          keep.style.background = t > 4.0 ? "#2f7a4d" : "#1d1c1a";
+          cur(t, curKeys);
+          var done = t > 5.8;
+          var st = done ? "ready for sign-off" : (t > 3.0 && t < 4.1 ? "waiting for you" : "running");
+          if (state.__t !== st) { state.textContent = st; state.__t = st; state.style.color = done ? "#2f7a4d" : (st === "waiting for you" ? "#946214" : "#6b665f"); }
+          pill.text(done ? "Done — ready for sign-off" : "Working through the plan…");
+          pill.tick(t, !done);
+          S.show(pill.el, t, 0.3, 0.7, 6.4, 6.9, 12);
+        });
+      })();
+
+      /* ---------------------------------------------------------------- 02 */
+      (function () {
+        var sc = scene(stage, "#ece6db");
+        var ht = S.halftone(sc, { blobs: [{ x: 1350, y: 720, r: 380 }, { x: 180, y: 160, r: 300 }], inner: [214, 120, 84], outer: [236, 206, 186] });
+        var w = S.el("div", "sc-world", sc);
+        var card = S.el("div", "sc-card sc-card--cream", w);
+        Object.assign(card.style, { left: "250px", top: "110px", width: "1100px", height: "680px" });
+        card.innerHTML = '<div style="padding:34px 44px 0"><div class="sc-serif" style="font-size:40px">Melting point vs. chain length</div><div style="font-size:20px;color:#8a857d;margin-top:6px">n-alkanes, C5–C40</div></div>' +
+          '<canvas class="cv" style="position:absolute;left:0;top:120px"></canvas><div class="sc-chips"></div>';
+        var cv = card.querySelector(".cv"); var dpr = 1.5; cv.width = 1100 * dpr; cv.height = 560 * dpr; cv.style.width = "1100px"; cv.style.height = "560px";
+        var g = cv.getContext("2d");
+        var N = 72, pts = [];
+        for (var i = 0; i < N; i++) {
+          var n = 5 + i * 35 / (N - 1);
+          var mp = 136 * Math.log(n) / Math.log(40) * 1.0 + (rnd(i) - 0.5) * 9;
+          pts.push({ tx: 110 + (n - 5) / 35 * 860, ty: 470 - (mp - 20) / 130 * 380, sx: rnd(i + 99) * 1100, sy: rnd(i + 199) * 560, d: rnd(i + 7) * 0.8 });
+        }
+        var chips = card.querySelector(".sc-chips");
+        function chip(txt, cls, x, y) { var e = S.el("span", "sc-tag " + cls, chips, txt); e.style.position = "absolute"; e.style.left = x + "px"; e.style.top = y + "px"; e.style.fontSize = "19px"; e.style.boxShadow = "0 10px 24px -12px rgba(0,0,0,.25)"; return e; }
+        var c1 = chip("Source · PubChem, 72 compounds", "sc-tag--blue", 150, 170);
+        var c2 = chip("Fit · Python 3.12 · numpy 2.1 · run #14", "sc-tag--green", 610, 250);
+        var c3 = chip("r² = 0.97", "", 900, 520);
+        var pill = S.pill(sc);
+        Object.assign(pill.el.style, { left: "50%", top: "40px", marginLeft: "-200px" });
+        var cam = S.camera(w, 1600, 900, [{ t: 0, x: 800, y: 470, s: 0.98 }, { t: 3.5, x: 760, y: 440, s: 1.1 }, { t: 7, x: 800, y: 450, s: 1.0 }]);
+        parts.push(function (t) {
+          ht(t); cam(t);
+          g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, 1100, 560);
+          var ax = S.out(S.lin(t, 0.2, 0.8));
+          g.strokeStyle = "rgba(60,55,50," + (0.35 * ax) + ")"; g.lineWidth = 1.5;
+          g.beginPath(); g.moveTo(110, 60); g.lineTo(110, 470); g.lineTo(980, 470); g.stroke();
+          g.fillStyle = "rgba(120,115,108," + ax + ")"; g.font = "17px Inter, system-ui, sans-serif"; g.textAlign = "center";
+          for (var c = 5; c <= 40; c += 5) g.fillText("C" + c, 110 + (c - 5) / 35 * 860, 500);
+          g.textAlign = "right"; for (var v = 25; v <= 150; v += 25) g.fillText(v + " °C", 98, 470 - (v - 20) / 130 * 380 + 6);
+          pts.forEach(function (p) {
+            var k = S.io(S.lin(t, 0.5 + p.d, 2.2 + p.d));
+            var x = S.lerp(p.sx, p.tx, k), y = S.lerp(p.sy, p.ty, k);
+            g.fillStyle = k < 1 ? "rgba(217,119,87," + (0.35 + 0.65 * k) + ")" : "#3b6fb6";
+            g.beginPath(); g.arc(x, y, S.lerp(3, 6, k), 0, 6.2832); g.fill();
+          });
+          var lk = S.io(S.lin(t, 3.0, 4.0));
+          if (lk > 0) {
+            g.strokeStyle = "#d97757"; g.lineWidth = 4; g.beginPath();
+            for (var j = 0; j <= 100 * lk; j++) { var nn = 5 + j / 100 * 35, mp = 136 * Math.log(nn) / Math.log(40); var X = 110 + (nn - 5) / 35 * 860, Y = 470 - (mp - 20) / 130 * 380; if (j) g.lineTo(X, Y); else g.moveTo(X, Y); }
+            g.stroke();
+          }
+          S.show(c1, t, 2.4, 2.8); S.show(c2, t, 4.0, 4.4); S.show(c3, t, 4.7, 5.1);
+          var done = t > 5.0;
+          pill.text(done ? "Every figure has a source" : "Computing in Python…");
+          pill.tick(t, !done);
+          S.show(pill.el, t, 0.3, 0.7, 6.4, 6.9, 12);
+        });
+      })();
+
+      /* ---------------------------------------------------------------- 03 */
+      (function () {
+        var sc = scene(stage, "#c3d8cf");
+        var wv = S.waves(sc, { count: 5, amp: 120, color: "rgba(255,255,255,.5)", width: 2.4 });
+        var w = S.el("div", "sc-world", sc);
+        var tree = S.el("div", "sc-card", w);
+        Object.assign(tree.style, { left: "150px", top: "110px", width: "660px", height: "680px" });
+        var files = [["billing/", 0, null], ["currency.ts", 1, "+48 −12"], ["invoice.ts", 1, "+31 −19"], ["rounding.ts", 1, "+22 −4"], ["api/", 0, null], ["invoices.ts", 1, "+14 −9"], ["payouts.ts", 1, "+9 −3"], ["web/", 0, null], ["InvoiceTable.tsx", 1, "+26 −21"], ["PriceLabel.tsx", 1, "+11 −6"], ["migrations/", 0, null], ["2026_09_chf.sql", 1, "+40 −0"]];
+        tree.innerHTML = '<div class="sc-bar">Project · sideforge-billing<span class="sp"></span><span class="cps sc-mono" style="font-size:18px;color:#8a857d"></span></div><div class="fl" style="padding:10px 0"></div>';
+        var fl = tree.querySelector(".fl");
+        var fileRows = files.map(function (f) {
+          var e = S.el("div", "", fl, (f[1] ? '<span style="width:26px"></span>' : '') + '<span class="sc-mono" style="font-size:21px;' + (f[1] ? "" : "color:#8a857d") + '">' + f[0] + '</span>' + (f[2] ? '<span class="d sc-tag sc-tag--green sc-mono" style="margin-left:auto;font-size:16px">' + f[2] + '</span>' : ''));
+          e.setAttribute("style", "display:flex;align-items:center;gap:8px;padding:9px 30px;" + (f[1] ? "" : "margin-top:6px"));
+          return e;
+        });
+        var tests = S.el("div", "sc-card", w);
+        Object.assign(tests.style, { left: "870px", top: "200px", width: "580px", height: "500px" });
+        tests.innerHTML = '<div class="sc-bar">Tests<span class="sp"></span><span class="tc sc-mono" style="font-size:19px">0 / 142</span></div>' +
+          '<div style="padding:26px 28px 8px"><div class="sc-meter" style="height:14px"><b class="tf" style="background:#2f7a4d"></b></div></div><div class="tr"></div>' +
+          '<div class="cp" style="position:absolute;left:28px;right:28px;bottom:28px;display:flex;gap:10px;align-items:center;font-size:20px;color:#4a4742"></div>';
+        var tr = tests.querySelector(".tr");
+        var suites = [["billing", 46], ["invoices", 38], ["api", 58]].map(function (s) { return S.el("div", "sc-row", tr, '<span class="sc-check on"></span><span>' + s[0] + '</span><small>' + s[1] + ' passed</small>'); });
+        var cp = tests.querySelector(".cp");
+        cp.innerHTML = '<span>Checkpoints</span>' + [0, 1, 2].map(function () { return '<i style="width:18px;height:18px;border-radius:50%;border:3px solid #d97757;display:inline-block"></i>'; }).join("") + '<span class="cpl" style="margin-left:auto"></span>';
+        var cpd = cp.querySelectorAll("i"), cpl = cp.querySelector(".cpl");
+        var tf = tests.querySelector(".tf"), tc = tests.querySelector(".tc");
+        var pill = S.pill(sc);
+        Object.assign(pill.el.style, { left: "50%", top: "810px", marginLeft: "-180px" });
+        var cam = S.camera(w, 1600, 900, [{ t: 0, x: 520, y: 430, s: 1.14 }, { t: 3.2, x: 700, y: 450, s: 1.02 }, { t: 5.2, x: 1120, y: 450, s: 1.12 }, { t: 7, x: 800, y: 450, s: 0.98 }]);
+        var diffs = tree.querySelectorAll(".d");
+        parts.push(function (t) {
+          wv(t); cam(t);
+          for (var i = 0; i < diffs.length; i++) { var k = S.out(S.lin(t, 0.5 + i * 0.3, 0.8 + i * 0.3)); diffs[i].style.opacity = k.toFixed(3); diffs[i].style.transform = "scale(" + (0.8 + 0.2 * k) + ")"; }
+          fileRows.forEach(function (r, i) { var hot = t > 0.5 + i * 0.25 && t < 0.9 + i * 0.25; r.style.background = hot ? "#fbf1ec" : "transparent"; });
+          var tp = S.io(S.lin(t, 2.8, 5.0));
+          tf.style.transform = "scaleX(" + tp.toFixed(3) + ")";
+          S.num(tc, 0, 142, t, 2.8, 5.0, function (v) { return Math.round(v) + " / 142"; });
+          suites.forEach(function (s, i) { S.show(s, t, 3.3 + i * 0.55, 3.7 + i * 0.55); });
+          [1.8, 3.4, 5.2].forEach(function (a, i) { cpd[i].style.background = t > a ? "#d97757" : "transparent"; });
+          var lb = t > 5.2 ? "3 saved" : (t > 3.4 ? "2 saved" : (t > 1.8 ? "1 saved" : "")); if (cpl.__t !== lb) { cpl.textContent = lb; cpl.__t = lb; }
+          var done = t > 5.2;
+          pill.text(done ? "All green · checkpoint 3 saved" : (t < 2.8 ? "Changing 8 files…" : "Running tests…"));
+          pill.tick(t, !done);
+          S.show(pill.el, t, 0.3, 0.7, 6.4, 6.9, 12);
+        });
+      })();
+
+      /* ---------------------------------------------------------------- 04 */
+      (function () {
+        var sc = scene(stage, "#d2cfe4");
+        var wv = S.waves(sc, { count: 4, amp: 150, color: "rgba(255,255,255,.55)", width: 2.4, speed: 0.12 });
+        var w = S.el("div", "sc-world", sc);
+        var card = S.el("div", "sc-card sc-card--cream", w);
+        Object.assign(card.style, { left: "230px", top: "100px", width: "1140px", height: "700px" });
+        card.innerHTML = '<div style="padding:34px 44px 0;display:flex;align-items:baseline;gap:18px"><span class="sc-serif" style="font-size:40px">Caffeine</span><span style="font-size:22px;color:#8a857d">C<sub>8</sub>H<sub>10</sub>N<sub>4</sub>O<sub>2</sub> · rotatable</span></div>' +
+          '<canvas class="cv" style="position:absolute;left:0;top:90px"></canvas>' +
+          '<div style="position:absolute;left:44px;bottom:32px;display:flex;gap:10px"><span class="sc-tag"><i style="width:14px;height:14px;border-radius:50%;background:#55534f;display:inline-block"></i>C</span><span class="sc-tag"><i style="width:14px;height:14px;border-radius:50%;background:#4a6fd1;display:inline-block"></i>N</span><span class="sc-tag"><i style="width:14px;height:14px;border-radius:50%;background:#d6554a;display:inline-block"></i>O</span><span class="sc-tag"><i style="width:14px;height:14px;border-radius:50%;background:#e9e6de;border:1px solid #cfcac1;display:inline-block"></i>H</span></div>';
+        var cv = card.querySelector(".cv"); var dpr = 1.5; cv.width = 1140 * dpr; cv.height = 610 * dpr; cv.style.width = "1140px"; cv.style.height = "610px";
+        var g = cv.getContext("2d");
+        // caffeine, laid out flat with its methyl hydrogens above and below the ring plane
+        var A = [
+          ["N", 0, 1.4, 0], ["C", 1.21, 0.7, 0], ["N", 1.21, -0.7, 0], ["C", 0, -1.4, 0], ["C", -1.21, -0.7, 0], ["C", -1.21, 0.7, 0],
+          ["N", -0.35, -2.72, 0], ["C", -1.62, -2.95, 0], ["N", -2.28, -1.78, 0],
+          ["O", 2.3, 1.35, 0], ["O", -2.3, 1.35, 0], ["C", 0, 2.88, 0], ["C", 2.45, -1.42, 0], ["C", -3.7, -1.55, 0], ["H", -2.1, -3.9, 0],
+          ["H", 0.95, 3.3, 0.35], ["H", -0.55, 3.25, 0.8], ["H", -0.45, 3.25, -0.85],
+          ["H", 3.25, -0.75, 0.3], ["H", 2.55, -2.05, 0.85], ["H", 2.55, -1.95, -0.9],
+          ["H", -4.25, -2.45, 0.2], ["H", -3.95, -0.95, 0.85], ["H", -3.95, -1.0, -0.9]
+        ];
+        var B = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [3, 6], [6, 7], [7, 8], [8, 4], [1, 9], [5, 10], [0, 11], [2, 12], [8, 13], [7, 14], [11, 15], [11, 16], [11, 17], [12, 18], [12, 19], [12, 20], [13, 21], [13, 22], [13, 23]];
+        var COL = { C: "#55534f", N: "#4a6fd1", O: "#d6554a", H: "#ebe8e1" }, RAD = { C: 0.42, N: 0.42, O: 0.44, H: 0.27 };
+        var cloud = []; for (var i = 0; i < 260; i++) cloud.push([rnd(i) * 2 - 1, rnd(i + 50) * 2 - 1, rnd(i + 90) * 2 - 1]);
+        var cur = S.cursor(w);
+        var curKeys = [{ t: 3.6, x: 1180, y: 700 }, { t: 4.1, x: 900, y: 460, hold: 0 }, { t: 5.3, x: 640, y: 470 }, { t: 5.8, x: 640, y: 470 }, { t: 6.5, x: 1500, y: 820 }];
+        curKeys.vis = function (t) { return S.lin(t, 3.6, 3.8) * (1 - S.lin(t, 6.1, 6.5)); };
+        var pill = S.pill(sc);
+        Object.assign(pill.el.style, { left: "50%", top: "38px", marginLeft: "-200px" });
+        var cam = S.camera(w, 1600, 900, [{ t: 0, x: 800, y: 470, s: 1.12 }, { t: 7, x: 800, y: 450, s: 1.0 }]);
+        parts.push(function (t) {
+          wv(t); cam(t);
+          g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, 1140, 610);
+          var drag = S.io(S.lin(t, 4.1, 5.3));
+          var ang = t * 0.45 + drag * 2.2, tilt = 0.35 + 0.15 * Math.sin(t * 0.4);
+          var ca = Math.cos(ang), sa = Math.sin(ang), ct = Math.cos(tilt), st = Math.sin(tilt);
+          var sc2 = 78, cx = 570, cy = 300;
+          function P(x, y, z) {
+            var X = x * ca + z * sa, Z = -x * sa + z * ca;
+            var Y = y * ct - Z * st; Z = y * st + Z * ct;
+            var f = 9 / (9 + Z);
+            return [cx + X * sc2 * f, cy - Y * sc2 * f, Z, f];
+          }
+          var build = S.io(S.lin(t, 0.4, 2.4));
+          // the cloud of points condensing
+          var ck = 1 - S.io(S.lin(t, 0.8, 2.6));
+          if (ck > 0) {
+            g.fillStyle = "rgba(217,119,87," + (0.8 * ck) + ")";
+            cloud.forEach(function (c, i) {
+              var a = A[i % A.length], r = 4.6 * ck + 0.2;
+              var p = P(S.lerp(a[1], c[0] * r, ck), S.lerp(a[2], c[1] * r, ck), S.lerp(a[3], c[2] * r, ck));
+              g.beginPath(); g.arc(p[0], p[1], 3.2 * p[3], 0, 6.2832); g.fill();
+            });
+          }
+          var bk = S.io(S.lin(t, 1.8, 2.8));
+          var proj = A.map(function (a) { return P(a[1], a[2], a[3]); });
+          if (bk > 0) {
+            B.slice().sort(function (a, b) { return (proj[b[0]][2] + proj[b[1]][2]) - (proj[a[0]][2] + proj[a[1]][2]); }).forEach(function (b) {
+              var p = proj[b[0]], q = proj[b[1]];
+              g.strokeStyle = "rgba(120,114,106," + (0.9 * bk) + ")"; g.lineWidth = 9 * (p[3] + q[3]) / 2;
+              g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(S.lerp(p[0], q[0], bk), S.lerp(p[1], q[1], bk)); g.stroke();
+            });
+          }
+          var ak = S.out(S.lin(t, 1.6, 2.8));
+          if (ak > 0) {
+            A.map(function (a, i) { return [a, proj[i]]; }).sort(function (a, b) { return b[1][2] - a[1][2]; }).forEach(function (e) {
+              var a = e[0], p = e[1], r = RAD[a[0]] * sc2 * p[3] * ak;
+              var gr = g.createRadialGradient(p[0] - r * 0.35, p[1] - r * 0.4, r * 0.1, p[0], p[1], r);
+              gr.addColorStop(0, "#ffffff"); gr.addColorStop(0.25, COL[a[0]]); gr.addColorStop(1, "rgba(0,0,0,0.55)");
+              g.fillStyle = COL[a[0]]; g.beginPath(); g.arc(p[0], p[1], r, 0, 6.2832); g.fill();
+              g.globalAlpha = 0.55; g.fillStyle = gr; g.fill(); g.globalAlpha = 1;
+            });
+          }
+          cur(t, curKeys);
+          var done = t > 3.4;
+          pill.text(done ? "Drag to rotate" : "Building the structure…");
+          pill.tick(t, !done);
+          S.show(pill.el, t, 0.3, 0.7, 6.4, 6.9, 12);
+          return build;
+        });
+      })();
+
+      var cuts = S.scenes(AT, 0.4);
+      var scs = stage.querySelectorAll(".sc-scene");
+      return function (t) {
+        var st = cuts(t, DUR);
+        for (var i = 0; i < parts.length; i++) {
+          var v = st[i].v;
+          scs[i].style.opacity = v.toFixed(3);
+          scs[i].style.visibility = v > 0 ? "visible" : "hidden";
+          if (v > 0) parts[i](Math.max(0, Math.min(7.4, st[i].t)));
+        }
       };
     }
   });

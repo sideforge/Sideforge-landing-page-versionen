@@ -7,7 +7,7 @@
 <meta name="description" content="An assistant that computes with real data, an IDE with a real terminal, tunnels for anything running at home, Linux desktops in the browser, 3D scans and quantum computing. One login, one bill, encrypted from the ground up.">
 <meta property="og:title" content="SideForge — the workshop behind your work">
 <meta property="og:description" content="One login, one bill, encrypted from the ground up. Built in Zürich.">
-<meta property="og:image" content="assets/video/workshop-poster.jpg">
+<meta property="og:image" content="assets/video/home-poster.jpg">
 <meta name="theme-color" content="#faf9f7">
 <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -45,21 +45,17 @@
 <main id="main">
   <section class="hero">
     <div class="wrap">
-      <h1 class="sr-only">Everything for your next project, your research, your services and your team.</h1>
-      <figure class="film film--hero rv" data-film="workshop" aria-label="Short film: five crafts — a blueprint, a microscope, a city at night, a loom and a forge.">
-        <img class="film__poster" src="assets/video/workshop-poster.jpg" alt="">
-        <canvas aria-hidden="true"></canvas>
-        <div class="hero-words" aria-hidden="true" data-tone="light">
-          <span class="pre">Everything for</span>
-          <span class="w">your next project</span>
-        </div>
+      <h1 class="display hero-h rv">Everything for <span class="hero-w">your next project</span></h1>
+      <figure class="film film--ui film--hero rv" style="--d:.08s" data-film="home" aria-label="Short film: SideForge building a site, loading research data, opening a tunnel, sharing one bill with a team.">
+        <div class="film__screen"><img class="film__poster" src="assets/video/home-poster.jpg" alt=""></div>
         <div class="film__bar">
-          <button class="film__play" type="button" aria-label="Pause film">
-            <svg class="i-pause" viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/></svg>
-            <svg class="i-play" viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1 L11 6 L2.5 11 Z"/></svg>
-          </button>
-          <div class="film__chapters"></div>
-        </div>
+        <button class="film__play" type="button" aria-label="Pause film">
+          <svg class="i-pause" viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/></svg>
+          <svg class="i-play" viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1 L11 6 L2.5 11 Z"/></svg>
+        </button>
+        <div class="film__chapters"></div>
+        <span class="film__meta">Live · 22s</span>
+      </div>
       </figure>
 
       <div class="intro">
@@ -130,15 +126,15 @@
   </section>
 
   <section class="feature">
-    <img src="assets/video/sintulus-net.jpg" alt="" loading="lazy">
     <div class="wrap">
       <div class="feature__in">
         <p class="eyebrow rv">Preview · End of 2026</p>
         <h2 class="rv" style="--d:.06s">Sintulus 6</h2>
         <p class="rv" style="--d:.1s">Our strongest tier, rebuilt from the ground up. For research with real computation and review, for code at its hardest points and for work that takes hours rather than minutes.</p>
         <div class="chips rv" style="--d:.14s"><span>Successor to Sintulus 5</span><span>Credits only</span><span>Chat · Code · Science · API</span></div>
-        <a class="btn btn--light rv" style="--d:.18s" href="sintulus/">View Sintulus 6 <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 7h11M8 3l4 4-4 4"/></svg></a>
+        <a class="btn btn--ink rv" style="--d:.18s" href="sintulus/">View Sintulus 6 <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 7h11M8 3l4 4-4 4"/></svg></a>
       </div>
+      <img class="feature__img rv" style="--d:.1s" src="assets/video/sintulus-3d.jpg" alt="A caffeine molecule rendered in 3D inside SideForge Science" loading="lazy">
     </div>
   </section>
 
@@ -248,24 +244,20 @@
   </div>
 </footer>
 
+<script src="assets/js/stage.js"></script>
 <script src="assets/js/film.js"></script>
-<script src="assets/js/films/workshop.js"></script>
+<script src="assets/js/films/home.js"></script>
 <script src="assets/js/site.js"></script>
 <script>
-  /* keep the headline word in step with the scene on screen */
+  /* the headline names what the film is showing */
   (function () {
-    var film = document.querySelector(".film--hero"), box = film && film.querySelector(".hero-words");
-    if (!box) return;
-    var w = box.querySelector(".w"), first = true;
+    var film = document.querySelector(".film--hero"), w = document.querySelector(".hero-w");
+    if (!film || !w) return;
     film.addEventListener("chapter", function (e) {
-      var c = e.detail.chapter;
-      if (first) { first = false; w.textContent = c.title; box.setAttribute("data-tone", c.tone); return; }
-      box.classList.add("is-swap");
-      setTimeout(function () {
-        w.textContent = c.title;
-        box.setAttribute("data-tone", c.tone);
-        box.classList.remove("is-swap");
-      }, 320);
+      var word = e.detail.chapter.title;
+      if (w.textContent === word) return;
+      w.classList.add("is-swap");
+      setTimeout(function () { w.textContent = word; w.classList.remove("is-swap"); }, 280);
     });
   })();
 </script>

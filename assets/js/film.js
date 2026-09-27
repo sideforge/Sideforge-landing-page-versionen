@@ -53,7 +53,35 @@
     requestAnimationFrame(this.loop);
   }
 
+  Player.prototype.initDom = function () {
+    var host = this.el.querySelector(".film__screen") || this.el;
+    var W = this.def.width || 1600, H = this.def.height || 900;
+    var stage = document.createElement("div");
+    stage.className = "sc-stage";
+    stage.style.width = W + "px";
+    stage.style.height = H + "px";
+    var back = document.createElement("div");
+    back.className = "sc-back";
+    host.appendChild(back);
+    host.appendChild(stage);
+    this.stage = stage;
+    this.back = back;
+    this.host = host;
+    this.W = W; this.H = H;
+    this.update = this.def.build(stage, { back: back, host: host, W: W, H: H });
+    return true;
+  };
+
+  Player.prototype.fit = function () {
+    var r = this.host.getBoundingClientRect();
+    var s = Math.min(r.width / this.W, r.height / this.H);
+    var x = (r.width - this.W * s) / 2, y = (r.height - this.H * s) / 2;
+    this.stage.style.transform = "translate(" + x + "px," + y + "px) scale(" + s + ")";
+    this.fitScale = s;
+  };
+
   Player.prototype.init = function () {
+    if (this.def.build) { this.dom = true; return this.initDom(); }
     var opts = { antialias: false, alpha: false, depth: false, stencil: false, premultipliedAlpha: false,
                  preserveDrawingBuffer: capture, powerPreference: "high-performance" };
     var gl = this.canvas.getContext("webgl", opts) || this.canvas.getContext("experimental-webgl", opts);
@@ -97,6 +125,13 @@
   };
 
   Player.prototype.draw = function () {
+    if (this.dom) {
+      this.fit();
+      this.update(this.t);
+      this.syncUI();
+      if (!this.el.classList.contains("is-live")) this.el.classList.add("is-live");
+      return;
+    }
     var gl = this.gl, t = this.t, def = this.def;
     this.resize();
     gl.uniform2f(this.u("u_res"), this.canvas.width, this.canvas.height);
@@ -117,7 +152,7 @@
 
   /* keep frame time under ~24ms by trading resolution; never go below 45% */
   Player.prototype.adapt = function (dt) {
-    if (capture) return;
+    if (capture || this.dom) return;
     this.frames.push(dt);
     if (this.frames.length < 20) return;
     var avg = this.frames.reduce(function (a, b) { return a + b; }, 0) / this.frames.length;
@@ -194,7 +229,7 @@
     if (i !== this.chapter) {
       this.chapter = i;
       var c = ch[i], cap = this.cap, self = this;
-      if (cap && c.title) {
+      if (cap && c.title && cap.querySelector(".t")) {
         cap.classList.add("is-swap");
         clearTimeout(this._sw);
         this._sw = setTimeout(function () {
@@ -228,7 +263,7 @@
       if (!def) return null;
       var p = new Player(el, def);
       el.__player = p;
-      if (capture) window.__film = { player: p, renderAt: function (t) { p.t = t; p.draw(); p.gl.finish(); } };
+      if (capture) window.__film = { player: p, renderAt: function (t) { p.t = t; p.draw(); if (p.gl) p.gl.finish(); } };
       return p;
     },
     // shared helpers for timelines
