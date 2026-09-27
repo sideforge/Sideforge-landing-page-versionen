@@ -62,15 +62,17 @@ assets/img/mark.svg       favicon
 
 The pages are framework-free on purpose so they can be reviewed as-is. To move them into the app: keep `site.css` tokens as the Tailwind theme, turn each film into a client component that mounts `Film` on a `<figure data-film>` in `useEffect`, and keep the shader strings unchanged.
 
-## SideAI hero (`/en/ai`) — realistic lake scene
+## SideAI hero (`/en/ai`) — the lake scene in 3D
 
-The hero on https://sideforge.ch/en/ai keeps its idea — one day at an alpine lake in 60 seconds — but is rendered realistically. Nothing else on that page changes.
+The hero on https://sideforge.ch/en/ai keeps its idea — one day at an alpine lake in 60 seconds, with the same four moods — but the painted layers are replaced by a real 3D scene. Nothing else on that page changes.
 
 - `ai/index.html` — preview of the hero with the same driver as the site (palettes, sun and moon path, phase buttons, pause) and a **Before / After** switch. Add `?t=22` to jump to a moment, `?v=old` to start on the original.
 - `ai/lake-scene.js` — the new fragment shader (`window.LAKE_REALISTIC`).
 - `ai/lake-original.js` — the current shader, for comparison only.
 - `ai/before-after.jpg` — morning, day, evening, night side by side.
 
-What changed: relief-lit mountains with gullies, strata and snow that follows them; spruce forest with individual crowns lit on the sun side; clouds with billowed tops and self-shadowed bases; horizontal banks of mist; a mirror lake with loop-periodic perspective waves, Fresnel and glitter under the sun and moon; a lit crescent moon with earthshine; sky scattering around the sun; grass along the shore. Composition, colours, timeline, train, boat, birds and shooting star are unchanged, and the 60 s loop stays seamless.
+How it is built: a raymarched terrain laid out from the original composition (the range's skyline is the painted one, turned into real height at 4 km; a ridge closes the valley; wooded slopes rise on both sides of the lake), soft shadows, real material colours (spruce forest, rock, snow, water) lit by the hour's sun and sky palette, a lake that reflects the terrain with loop-periodic waves, Fresnel and glitter, a perspective cumulus deck, aerial perspective, low mist on the water, a lit crescent moon, stars, birds, the shooting star, and village lights at the end of the lake after dark. The 60 s loop stays seamless.
 
 **Integration:** in the hero component, replace the fragment shader template string (the one that starts with `#ifdef GL_FRAGMENT_PRECISION_HIGH` and declares `uSkyTop`, `uSun`, `uLife`, …) with the contents of `LAKE_REALISTIC`. Uniform names and types are identical, so the JavaScript around it stays as it is.
+
+**Cost:** this shader does far more work per pixel than the flat one. The component already lowers its resolution when frames get slow (down to half), which keeps it smooth on laptops; on very weak devices it will look softer.
