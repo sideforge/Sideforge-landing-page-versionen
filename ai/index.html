@@ -159,7 +159,7 @@
   document.querySelectorAll(".ab button").forEach(function (o) { o.setAttribute("aria-pressed", String(o.getAttribute("data-v") === which)); });
   addEventListener("pointermove", function (e) { if (e.pointerType === "mouse") { ptrT[0] = e.clientX / innerWidth * 2 - 1; ptrT[1] = e.clientY / innerHeight * 2 - 1; } }, { passive: true });
 
-  if (capture) { window.renderAt = function (x) { t = x; render(); gl.finish(); }; render(); return; }
+  if (capture) { window.renderAt = function (x) { t = x; render(); gl.finish(); }; window.renderAtIntro = function (x, i) { t = x; intro = i; render(); gl.finish(); }; render(); return; }
 
   var last = performance.now(), avg = 1 / 30, n = 0;
   (function loop(now) {

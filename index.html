@@ -8,7 +8,7 @@
 <meta property="og:title" content="SideForge — the workshop behind your work">
 <meta property="og:description" content="One login, one bill, encrypted from the ground up. Built in Zürich.">
 <meta property="og:image" content="assets/video/home-poster.jpg">
-<meta name="theme-color" content="#faf9f7">
+<meta name="theme-color" content="#0b0a09">
 <link rel="icon" href="assets/img/mark.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,21 +43,21 @@
 </header>
 
 <main id="main">
+  <section class="lh" data-hero="home" aria-labelledby="lh-title">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lh-ink" x="-4%" y="-15%" width="108%" height="130%"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.4" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
+    <canvas class="lh__gl" aria-hidden="true"></canvas>
+    <div class="lh__shade" aria-hidden="true"></div>
+    <p class="lh__intro" aria-hidden="true">SideForge</p>
+    <div class="lh__set">
+      <p class="lh__date">One login · one bill · Zürich</p>
+      <h1 class="lh__title" id="lh-title">Everything for<br><span class="w">your next project</span></h1>
+      <div class="lh__cta"><a class="btn btn--light" href="https://sideforge.ch/register">Get started free <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 7h11M8 3l4 4-4 4"/></svg></a></div>
+    </div>
+    <div class="lh__foot"><span>Drawn live in your browser</span><a href="assets/video/home.mp4" download>Download film</a></div>
+  </section>
+
   <section class="hero">
     <div class="wrap">
-      <h1 class="display hero-h rv">Everything for <span class="hero-w">your next project</span></h1>
-      <figure class="film film--ui film--hero rv" style="--d:.08s" data-film="home" aria-label="Short film: SideForge building a site, loading research data, opening a tunnel, sharing one bill with a team.">
-        <div class="film__screen"><img class="film__poster" src="assets/video/home-poster.jpg" alt=""></div>
-        <div class="film__bar">
-        <button class="film__play" type="button" aria-label="Pause film">
-          <svg class="i-pause" viewBox="0 0 12 12" fill="currentColor"><rect x="2" y="1" width="3" height="10"/><rect x="7" y="1" width="3" height="10"/></svg>
-          <svg class="i-play" viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1 L11 6 L2.5 11 Z"/></svg>
-        </button>
-        <div class="film__chapters"></div>
-        <span class="film__meta">Live · 22s</span>
-      </div>
-      </figure>
-
       <div class="intro">
         <div>
           <p class="lede rv">SideForge is the workshop behind your work: an assistant that computes with real data, an IDE with a real terminal, tunnels for anything running at home, Linux desktops in the browser, 3D scans and quantum computing. One login, one bill, encrypted from the ground up.</p>
@@ -244,21 +244,21 @@
   </div>
 </footer>
 
-<script src="assets/js/stage.js"></script>
-<script src="assets/js/film.js"></script>
-<script src="assets/js/films/home.js"></script>
+<script src="assets/js/hero.js"></script>
+<script src="assets/js/heroes/home.js"></script>
 <script src="assets/js/site.js"></script>
 <script>
-  /* the headline names what the film is showing */
+  /* once the title is set, the last words turn over every few seconds */
   (function () {
-    var film = document.querySelector(".film--hero"), w = document.querySelector(".hero-w");
-    if (!film || !w) return;
-    film.addEventListener("chapter", function (e) {
-      var word = e.detail.chapter.title;
-      if (w.textContent === word) return;
+    var w = document.querySelector(".lh__title .w"), hero = document.querySelector(".lh");
+    if (!w || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var words = ["your next project", "your research", "your services", "your team"], i = 0;
+    setInterval(function () {
+      if (!hero.classList.contains("is-set") || document.hidden) return;
+      i = (i + 1) % words.length;
       w.classList.add("is-swap");
-      setTimeout(function () { w.textContent = word; w.classList.remove("is-swap"); }, 280);
-    });
+      setTimeout(function () { w.textContent = words[i]; w.classList.remove("is-swap"); }, 320);
+    }, 3200);
   })();
 </script>
 </body>

@@ -24,25 +24,30 @@ python3 -m http.server 8000
 - **Editorial, not "landing page".** Warm paper canvas (`#faf9f7`), near-black ink, a single clay accent (`#d97757`, the existing brand colour). Newsreader for voice, Inter for UI, JetBrains Mono for labels. No gradients-on-cards, glows or icon grids.
 - **Model pages read like a launch post.** Big serif title, numbered table of contents with dotted leaders, a film, then a narrow article column with a sticky section nav, a spec sheet, numbered capabilities with small line drawings that draw themselves, roadmap, FAQ, "read next".
 - **Light and dark.** Follows the system setting; the footer has an Auto / Light / Dark switch.
-- **Motion is quiet.** Scroll reveals, line drawings, a statement that lights up word by word. Everything respects `prefers-reduced-motion` (films start paused).
+- **Motion is quiet.** Scroll reveals, line drawings, a statement that lights up word by word. Everything respects `prefers-reduced-motion` (the heroes show their final frame).
 
-## The films
+## The heroes
 
-Each page opens with a short product film in the visual language Anthropic uses to present its models — UI cards on soft colour fields (dusty blue, sage, sand, lavender), halftone clouds and fine wave lines behind them, a status pill whose label shimmers while work is in progress, a cursor, a slow camera that moves into the detail. The content is SideForge's own; no footage, frames or compositions are reused.
+Every page opens the way Anthropic's Claude Opus 5.5 launch page does — a launch collage — with SideForge's own images and materials:
 
-The films are HTML, played live in the browser on a fixed 1600×900 stage (sharp at any size, real fonts, no video download). Every frame is a pure function of time, so the player can seek, loop and capture.
+1. black;
+2. photographs of materials are laid down one by one as tiles around a window;
+3. a first word appears over the window ("Introducing");
+4. the window opens almost to full width, the materials stay behind as narrow strips at the edges;
+5. the title is set in a serif with a rough, inked edge, then the date and the contents; the image keeps moving slowly.
 
-| Film | File | Scenes |
+Everything is drawn live in one WebGL fragment shader (`assets/js/hero.js`); each page supplies its centre image and four materials:
+
+| Page | Centre image | Materials |
 | --- | --- | --- |
-| **Home** (22 s) | `assets/js/films/home.js` | Forge IDE writes a page while the live preview builds it · Science loads four databases and computes · one command opens an encrypted tunnel and a shop goes live · a team joins a workspace and everything lands on one invoice · all tools gather around the mark. The headline above ("Everything for …") follows the scene. |
-| **Venura 6.5** (28 s) | `assets/js/films/venura.js` | a Code session reaches its context limit, summarises itself and carries on · a plan ticks off with three well-chosen tool calls instead of nine · a draft is read back against the task, two claims backed, one marked open · a chart is read point by point into a table |
-| **Sintulus 6** (28 s) | `assets/js/films/sintulus.js` | a run lasts from 08:12 to 17:40 and asks for one decision · dots settle into a figure whose parts carry their provenance · one change across the whole project with checkpoints and tests · a molecule assembles from a cloud of points and turns in 3D |
+| Home (`assets/js/heroes/home.js`) | a dune field at the last light, raymarched, camera drifting over the sand | kraft board, brushed steel, black card, fluted red rock |
+| Venura 6.5 (`heroes/venura.js`) | ridge after ridge of mountains receding into morning haze, telephoto | topographic map, granite, black card, ice |
+| Sintulus 6 (`heroes/sintulus.js`) | looking up from deep water: light shafts, the bright surface, drifting particles | lab graph paper, copper patina, black card, rippled sand |
+| SideAI `/en/ai` (`ai/lake-scene.js`) | the lake in 3D through the day (same palettes and 60 s loop as the live hero) | yellow paper, slate, black card, moss |
 
-`assets/js/stage.js` holds the building blocks (halftone, waves, pill, cursor, camera, scene cross-fades); `assets/js/film.js` plays them with chapters, captions, play/pause and pauses off-screen.
+No photographs, footage or code from Anthropic are used; the materials and images are procedural.
 
-### Rendered versions
-
-`assets/video/` holds poster stills and MP4 renders of the three films (1600×900, 24 fps), made by opening a film with `?capture`, calling `window.__film.renderAt(t)` frame by frame in headless Chromium and piping the frames into ffmpeg.
+`assets/video/` holds stills and 10 s MP4 renders of the three page intros (1280×720, 24 fps), made by opening the hero with `?capture`, calling `window.__hero.renderAt(t)` frame by frame in headless Chromium and piping into ffmpeg.
 
 ## Structure
 
@@ -50,31 +55,23 @@ The films are HTML, played live in the browser on a fixed 1600×900 stage (sharp
 index.html                home
 venura/index.html         Venura 6.5
 sintulus/index.html       Sintulus 6
-assets/css/site.css       design tokens, components, page layouts
+ai/                       SideAI hero preview (before/after) and its shader
+assets/css/site.css       design tokens, components, page layouts, hero overlay
 assets/js/site.js         nav, reveals, scroll-spy, theme switch, word-by-word statement
-assets/js/film.js         WebGL film player
-assets/js/stage.js        building blocks for the product films
-assets/js/films/*.js      the three films
-assets/video/             posters, stills, MP4 renders
+assets/js/hero.js         the launch collage (shader, materials, choreography)
+assets/js/heroes/*.js     the centre image and materials per page
+assets/video/             stills and MP4 renders
 assets/img/mark.svg       favicon
 ```
 
 ## Porting to the Next.js site
 
-The pages are framework-free on purpose so they can be reviewed as-is. To move them into the app: keep `site.css` tokens as the Tailwind theme, turn each film into a client component that mounts `Film` on a `<figure data-film>` in `useEffect`, and keep the shader strings unchanged.
+The pages are framework-free on purpose so they can be reviewed as-is. To move them into the app: keep `site.css` tokens as the Tailwind theme, turn the hero into a client component that mounts `Hero` on a `<section data-hero>` in `useEffect`, and keep the shader strings unchanged.
 
-## SideAI hero (`/en/ai`) — the lake as a paper diorama
+## SideAI hero (`/en/ai`)
 
-The hero on https://sideforge.ch/en/ai keeps its idea, composition and 60 s day, but is now rendered like a handmade diorama shot close up — the tactile, crafted material language of Anthropic's brand films, with SideForge's own motif:
-
-- watercolour-paper sky, torn-paper mountains with white fibre edges and glued-on snow, a second torn sheet for the ridge
-- scissor-cut spruce hills in felt, tissue-paper clouds, tracing-paper mist
-- a sun cut from card, a paper crescent moon, stars pricked with a needle and lit from behind
-- a lake of crumpled foil that mirrors everything, a felt shore, a folded paper boat, a card train with cut-out windows
-- every layer throws a real shadow on the one behind it, following the sun across the day; moving pieces step like stop-motion
-
-Files: `ai/index.html` (preview with **Before / After** switch; `?t=22` jumps to a moment, `?v=old` starts on the original), `ai/lake-scene.js` (the new shader), `ai/lake-original.js` (current shader, for comparison), `ai/before-after.jpg`.
+See the table above: the lake is rendered in 3D and seen through the same launch collage. The intro runs on the component's existing `uIntro` (0 → 1 over the first 2.4 s): tiles are laid down, then the window opens. Files: `ai/index.html` (preview with **Before / After** switch; `?t=22` jumps to a moment, `?v=old` starts on the original), `ai/lake-scene.js`, `ai/lake-original.js`, `ai/before-after.jpg`.
 
 **Integration:** in the hero component, replace the fragment shader template string (the one that starts with `#ifdef GL_FRAGMENT_PRECISION_HIGH` and declares `uSkyTop`, `uSun`, `uLife`, …) with the contents of `LAKE_REALISTIC`. Uniform names and types are identical, so the JavaScript around it stays as it is.
 
-**Cost:** about the same per pixel as the current shader.
+**Cost:** the 3D lake does far more work per pixel than the flat original; the component already lowers its resolution when frames get slow.
