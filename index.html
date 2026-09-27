@@ -43,17 +43,16 @@
 </header>
 
 <main id="main">
-  <section class="lh" data-hero="home" aria-labelledby="lh-title">
+  <section class="lh" aria-labelledby="lh-title">
     <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="lh-ink" x="-4%" y="-15%" width="108%" height="130%"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.4" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
-    <canvas class="lh__gl" aria-hidden="true"></canvas>
+    <video class="lh__video" muted playsinline autoplay preload="auto" poster="assets/video/home-end.jpg" aria-hidden="true"><source src="assets/video/home.mp4" type="video/mp4"></video>
     <div class="lh__shade" aria-hidden="true"></div>
-    <p class="lh__intro" aria-hidden="true">SideForge</p>
     <div class="lh__set">
       <p class="lh__date">One login · one bill · Zürich</p>
       <h1 class="lh__title" id="lh-title">Everything for<br><span class="w">your next project</span></h1>
       <div class="lh__cta"><a class="btn btn--light" href="https://sideforge.ch/register">Get started free <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 7h11M8 3l4 4-4 4"/></svg></a></div>
     </div>
-    <div class="lh__foot"><span>Drawn live in your browser</span><a href="assets/video/home.mp4" download>Download film</a></div>
+    <div class="lh__foot"><span>SideForge · a short film</span><a href="assets/video/home.mp4" download>Download film</a></div>
   </section>
 
   <section class="hero">
@@ -244,8 +243,7 @@
   </div>
 </footer>
 
-<script src="assets/js/hero.js"></script>
-<script src="assets/js/heroes/home.js"></script>
+<script src="assets/js/lh.js"></script>
 <script src="assets/js/site.js"></script>
 <script>
   /* once the title is set, the last words turn over every few seconds */

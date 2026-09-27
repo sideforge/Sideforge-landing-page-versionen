@@ -1,11 +1,11 @@
-/* SideAI hero — "lakeScene" as a launch collage.
-   Drop-in replacement for the fragment shader of the hero on /en/ai: same uniforms,
-   palettes, 60 s day and composition. The lake is rendered in 3D (terrain, reflecting
-   water, clouds, mist, moon and stars) and seen through a window in a collage of material
-   photographs — yellow paper, slate, black card, moss. During the intro (uIntro 0 → 1)
-   the tiles are laid down and the window opens almost to full width; the materials stay
-   as narrow strips at the edges. */
-window.LAKE_REALISTIC = `
+/* SideAI hero — "lakeScene", rendered in 3D.
+   Drop-in replacement for the fragment shader of the hero on /en/ai: same uniforms, same
+   palettes and 60 s day. The painted layers are replaced by a real scene seen from the
+   shore: a raymarched terrain (alpine range, a ridge across the far end, forested slopes
+   on both sides), a lake that reflects it with loop-periodic waves, a perspective cloud
+   deck, aerial perspective and soft shadows. The palettes still set the mood of each
+   hour; the sun and moon sit where they always did on screen. */
+window.LAKE3D = `
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
@@ -343,7 +343,7 @@ vec3 waterNormal(vec2 p, float t) {
   return normalize(vec3(-g.x, 1.0, -g.y));
 }
 
-vec3 lakeImage() {
+void main() {
   vec2 s = (vUv - 0.5) * vec2(uAspect, 1.0);
   float px = 1.0 / uRes.y;
   vec3 ro = vec3(uPointer.x * 0.3, CAMH, 0.0);
@@ -378,68 +378,7 @@ vec3 lakeImage() {
   vec2 fc = gl_FragCoord.xy;
   col *= 1.0 + (hash12(floor(fc)) - 0.5) * 0.025;
   col += (hash12(fc + 17.0) - 0.5) / 255.0 * 2.0;
-  return clamp(col, 0.0, 1.0);
-}
-
-// ---------------------------------------------------------------- the collage around it
-// Material photographs laid around the window; uIntro (0 → 1 over the first seconds, driven
-// by the page as before) lays the tiles down and then opens the window almost to full width.
-float cf3(vec2 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 3; i++) { s += a * n2(p); p = M2 * p * 2.03 + 1.7; a *= 0.5; } return s / 0.875; }
-float cn1(float x) { float i = floor(x); float f = fract(x); return mix(hash11(i), hash11(i + 1.0), f * f * (3.0 - 2.0 * f)); }
-vec3 mBlackT(vec2 p) { return vec3(0.035, 0.032, 0.03) * (0.8 + 0.5 * n2(p * 0.9)) + vec3(0.05) * step(0.985, hash12(floor(p * 0.5))); }
-vec3 mYellowT(vec2 p) {
-  vec3 c = vec3(0.95, 0.73, 0.13) * (0.9 + 0.16 * cf3(p * 0.004));
-  c *= 0.95 + 0.07 * n2(vec2(p.x * 0.02, p.y * 0.35));
-  float crease = smoothstep(2.5, 0.0, abs(p.x * 0.34 + p.y * 0.94 - 420.0 - 40.0 * cn1(p.y * 0.01)));
-  c *= 1.0 - 0.12 * crease;
-  float tape = step(abs(p.y - 120.0), 24.0); c = mix(c, c * 1.06 + vec3(0.05), tape * 0.45);
-  return c;
-}
-float hSlate(vec2 p) { return cf3(p * vec2(0.006, 0.02)) * 0.7 + n2(p * vec2(0.05, 0.3)) * 0.3; }
-vec3 mGraniteT(vec2 p) {
-  float e = 1.5; float h = hSlate(p), hx = hSlate(p + vec2(e, 0.0)), hy = hSlate(p + vec2(0.0, e));
-  vec3 n = normalize(vec3(-(hx - h) * 12.0, -(hy - h) * 12.0, 1.0));
-  float l = clamp(dot(n, normalize(vec3(-0.6, -0.7, 0.5))), 0.0, 1.0);
-  vec3 alb = mix(vec3(0.2, 0.22, 0.25), vec3(0.4, 0.42, 0.45), h);
-  return alb * (0.35 + 0.9 * l) * (0.92 + 0.12 * n2(p * 1.7));
-}
-float hMoss(vec2 p) { return cf3(p * 0.03) * 0.6 + n2(p * 0.4) * 0.4; }
-vec3 mMossT(vec2 p) {
-  float e = 1.5; float h = hMoss(p), hx = hMoss(p + vec2(e, 0.0)), hy = hMoss(p + vec2(0.0, e));
-  vec3 n = normalize(vec3(-(hx - h) * 10.0, -(hy - h) * 10.0, 1.0));
-  float l = clamp(dot(n, normalize(vec3(-0.6, -0.7, 0.5))), 0.0, 1.0);
-  vec3 alb = mix(vec3(0.12, 0.2, 0.06), vec3(0.42, 0.52, 0.16), smoothstep(0.3, 0.8, h));
-  return alb * (0.25 + 1.0 * l) * (0.9 + 0.2 * n2(p * 2.1));
-}
-vec3 tileMat(int i, vec2 p) {
-  if (i == 0) return mYellowT(p);
-  if (i == 1) return mGraniteT(p);
-  if (i == 3) return mBlackT(p);
-  return mMossT(p);
-}
-float ease3(float x) { x = clamp(x, 0.0, 1.0); return x < 0.5 ? 4.0 * x * x * x : 1.0 - pow(-2.0 * x + 2.0, 3.0) / 2.0; }
-
-void main() {
-  vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
-  float W = uRes.x, Hh = uRes.y;
-  float u = uIntro;
-  float open = ease3((u - 0.55) / 0.4);
-  float lw = mix(0.27, 0.024, open) * W, rw = mix(0.23, 0.032, open) * W;
-  float ls = mix(0.52, 0.46, open) * Hh, rs = mix(0.38, 0.42, open) * Hh;
-  vec3 col = mBlackT(p);
-  // which tile, and how far it has been laid down
-  vec4 r = vec4(lw, 0.0, W - rw, Hh); float rv = ease3((u - 0.12) / 0.25); int id = 2;
-  if (p.x < lw) { if (p.y < ls) { r = vec4(0.0, 0.0, lw, ls); rv = ease3((u - 0.05) / 0.22); id = 0; } else { r = vec4(0.0, ls, lw, Hh); rv = ease3((u - 0.2) / 0.22); id = 1; } }
-  else if (p.x >= W - rw) { if (p.y < rs) { r = vec4(W - rw, 0.0, W, rs); rv = ease3((u - 0.1) / 0.22); id = 3; } else { r = vec4(W - rw, rs, W, Hh); rv = ease3((u - 0.16) / 0.22); id = 4; } }
-  float edge = r.y + (r.w - r.y) * rv + 6.0 * (cn1(p.x * 0.08 + float(id) * 9.0) - 0.5);
-  if (p.y <= edge) {
-    vec3 c = id == 2 ? lakeImage() : tileMat(id, p + vec2(float(id) * 137.0, float(id) * 71.0));
-    float sh = min(min(p.x - r.x, r.z - p.x), min(p.y - r.y, edge - p.y));
-    c *= 0.72 + 0.28 * smoothstep(0.0, 5.0, sh);
-    col = c;
-  }
-  col += (hash12(gl_FragCoord.xy + fract(uLoop * 7.0) * 97.0) - 0.5) * 0.035;
-  col *= smoothstep(0.0, 0.08, u);
+  col = mix(uSkyTop, col, smoothstep(0.0, 0.25, uIntro));
   gl_FragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
 }
 `;

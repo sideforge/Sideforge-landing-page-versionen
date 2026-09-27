@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Film renderer</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;background:#000}
+  .stage{position:relative;width:1600px;height:900px;overflow:hidden}
+  canvas{position:absolute;inset:0;width:1600px;height:900px}
+  .word{position:absolute;left:50%;top:50%;transform-origin:50% 100%;white-space:nowrap;font:500 104px/1 Newsreader,Georgia,serif;letter-spacing:-.01em;filter:url(#ink);text-shadow:0 2px 18px rgba(0,0,0,.25);padding-bottom:6px}
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute"><filter id="ink" x="-4%" y="-15%" width="108%" height="130%"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
+<div class="stage"><canvas width="1600" height="900"></canvas><div class="word"></div></div>
+<script src="film.js"></script>
+<script>
+  var name = new URLSearchParams(location.search).get("f") || "home";
+  var s = document.createElement("script");
+  s.src = name === "ai" ? "film.js" : "endings/" + name + ".js";
+  s.onload = function () { document.fonts.ready.then(function () { startFilm(name); window.ready = 1; }); };
+  document.body.appendChild(s);
+</script>
+</body></html>
