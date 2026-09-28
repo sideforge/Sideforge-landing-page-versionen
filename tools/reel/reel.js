@@ -7,6 +7,8 @@
   var Q = new URLSearchParams(location.search);
   var K = +(Q.get("k") || 1);                       // output scale: 1 = 1080×1920
   var W = Math.round(TL.W * K), H = Math.round(TL.H * K);
+  var SS = +(Q.get("ss") || 1);                     // scene resolution (words, logo and grain are always full size)
+  var SW = Math.round(W * SS), SHt = Math.round(H * SS);
 
   var cv = document.getElementById("gl");
   cv.width = W; cv.height = H; cv.style.width = W + "px"; cv.style.height = H + "px";
@@ -48,8 +50,13 @@
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
-  var P = { scene: prog(SH.SCENE), bright: prog(SH.BRIGHT), blur: prog(SH.BLUR), fin: prog(SH.FINAL) };
-  var RT = { scene: target(W, H), b4: target(W >> 2, H >> 2), b4t: target(W >> 2, H >> 2), b8: target(W >> 3, H >> 3), b8t: target(W >> 3, H >> 3) };
+  var P = { bright: prog(SH.BRIGHT), blur: prog(SH.BLUR), fin: prog(SH.FINAL) }, SCENES = {};
+  function sceneProg(s) {
+    var mat = s.scene === TL.SCENES.MAT ? s.a[0] : 0, key = s.scene + ":" + mat;
+    if (!SCENES[key]) SCENES[key] = prog(SH.SCENE.replace("precision highp float;", "precision highp float;\n#define SCENE_ID " + s.scene + "\n#define MATID " + mat));
+    return SCENES[key];
+  }
+  var RT = { scene: target(SW, SHt), b4: target(W >> 2, H >> 2), b4t: target(W >> 2, H >> 2), b8: target(W >> 3, H >> 3), b8t: target(W >> 3, H >> 3) };
   var T_FX = tex(W, H, false), T_TX = tex(W, H, false);
 
   // ------------------------------------------------------------------ the logo: the SideForge anvil (sideforge.ch/logo.png, traced)
@@ -242,17 +249,19 @@
     var s = shotAt(t), x = t - s.t0, p = x / s.dur, E = ease(s, p);
     var lt = localTime(s, x);
     var o = post(t, s, x);
-    pass(P.scene, RT.scene, function (u) {
-      gl.uniform2f(u.uRes, W, H); gl.uniform1f(u.uT, t); gl.uniform1f(u.uL, lt); gl.uniform1f(u.uP, p);
+    pass(sceneProg(s), RT.scene, function (u) {
+      gl.uniform2f(u.uRes, SW, SHt); gl.uniform1f(u.uT, t); gl.uniform1f(u.uL, lt); gl.uniform1f(u.uP, p);
       gl.uniform1f(u.uE, E); gl.uniform1f(u.uDur, s.dur); gl.uniform1f(u.uSeed, (s.i * 7.31) % 13);
       gl.uniform1f(u.uRise, s.rise ? x / s.rise : -1);
-      gl.uniform1i(u.uScene, s.scene); gl.uniform1i(u.uAA, s.scene === TL.SCENES.MARK ? 2 : 1);
+      gl.uniform1i(u.uAA, s.scene === TL.SCENES.MARK ? 2 : 1);
       gl.uniform4fv(u.uA, s.a); gl.uniform4fv(u.uB, s.b); gl.uniform4fv(u.uC, s.c);
       bindT(u, "uLogo", 0, T_LOGO); gl.uniform4f(u.uLogoM, LX0, LY0, TPU, LW); gl.uniform1f(u.uLogoH, LH);
     });
+    var T0 = performance.now(); if (window.PROF) { var q = new Uint8Array(4); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, q); window.PROF.scene = performance.now() - window.PROF.t; }
     fx.clearRect(0, 0, W, H); drawFx(s, lt);
     tx.clearRect(0, 0, W, H); drawText(t, s, E, o.zoom);
     upload(T_FX, fxc); upload(T_TX, txc);
+    if (window.PROF) { var q2 = new Uint8Array(4); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, q2); window.PROF.canv = performance.now() - T0; }
     pass(P.bright, RT.b4, function (u) {
       bindT(u, "uS", 0, RT.scene.t); bindT(u, "uF", 1, T_FX);
       gl.uniform1f(u.uZoom, o.zoom); gl.uniform2f(u.uShake, o.shake[0], o.shake[1]);
@@ -260,6 +269,7 @@
     blur(RT.b4, RT.b4t, 1, 1); blur(RT.b4, RT.b4t, 2, 2);
     pass(P.blur, RT.b8, function (u) { bindT(u, "uS", 0, RT.b4.t); gl.uniform2f(u.uDir, 0, 0); });
     blur(RT.b8, RT.b8t, 1.5, 1.5); blur(RT.b8, RT.b8t, 3, 3);
+    if (window.PROF) { var q3 = new Uint8Array(4); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, q3); window.PROF.bloom = performance.now() - window.PROF.t; }
     pass(P.fin, null, function (u) {
       bindT(u, "uS", 0, RT.scene.t); bindT(u, "uB4", 1, RT.b4.t); bindT(u, "uB8", 2, RT.b8.t);
       bindT(u, "uF", 3, T_FX); bindT(u, "uX", 4, T_TX);
@@ -269,6 +279,7 @@
       gl.uniform1f(u.uExp, 1.0); gl.uniform1f(u.uT, t); gl.uniform1f(u.uGrain, .05); gl.uniform2f(u.uRes, W, H);
     });
     gl.finish();
+    if (window.PROF) { var px = new Uint8Array(4); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); window.PROF.fin = performance.now() - window.PROF.t; }
     return s.i;
   };
 

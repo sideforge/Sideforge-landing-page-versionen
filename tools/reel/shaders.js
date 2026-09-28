@@ -26,7 +26,9 @@ mat3 cam(vec3 ro,vec3 ta,float roll){vec3 w=normalize(ta-ro),u=normalize(cross(w
 `;
 
   var SCENE = COMMON + `
-uniform vec2 uRes; uniform float uT,uL,uP,uE,uDur,uSeed,uRise; uniform int uScene,uAA;
+uniform vec2 uRes; uniform float uT,uL,uP,uE,uDur,uSeed,uRise; uniform int uAA;
+// SCENE_ID and MATID are compiled in (reel.js builds one program per scene and material):
+// a software GPU runs every branch of a uniform switch, so each program carries only its own.
 uniform vec4 uA,uB,uC;
 out vec4 o;
 const vec3 DARK=vec3(.012,.012,.016);
@@ -61,7 +63,7 @@ float hGuil(vec2 p){return -.35*guil(p)+.015*n2(p*90.);}
 float wring(vec2 p){return fract(p.y*6.+fbm3(p*vec2(.45,2.))*2.6+.6*sin(p.x*.6));}
 float hWood(vec2 p){float r=wring(p);return .12*smoothstep(0.,.25,r)*smoothstep(1.,.55,r)+.06*n2(vec2(p.x*5.,p.y*320.));}
 float hIron(vec2 p){vec4 v=vor(p*2.6);float e=v.y-v.x;return smoothstep(0.,.07,e)*(.55+.45*fbm3(p*5.))+.08*n2(p*50.);}
-float leaf(vec2 p){return smoothstep(.55,.59,fbm3(p*1.1)*.7+fbm3(p*3.+5.)*.3);}
+float leaf(vec2 p){return smoothstep(.38,.44,fbm3(p*.75+2.)*.75+fbm3(p*3.+5.)*.25);}
 float hGold(vec2 p){float leaf=leaf(p);vec4 v=vor(p*15.);return leaf*(.3-.14*smoothstep(.06,0.,v.y-v.x))+.01*n2(p*80.);}
 float H(int id,vec2 p){
   if(id==0)return hIce(p);if(id==1)return hFelt(p);if(id==2)return hCopper(p);if(id==3)return .02*n2(p*80.);
@@ -168,7 +170,7 @@ vec3 above(bool light,vec2 uv){
   return c;
 }
 vec3 sMat(vec2 uv){
-  int id=int(uA.x+.5);
+  const int id=MATID;
   bool light=id==3||id==7||id==10;
   float z=mix(uB.z,uB.w,uE);
   uv/=z;
@@ -321,8 +323,19 @@ vec3 sEnd(vec2 uv){
 }
 
 vec3 scene(vec2 uv){
-  if(uScene==0)return sMat(uv);if(uScene==1)return sMark(uv);if(uScene==2)return sDunes(uv);
-  if(uScene==3)return sRidges(uv);if(uScene==4)return sEnd(uv);return above(false,uv);
+#if SCENE_ID==0
+  return sMat(uv);
+#elif SCENE_ID==1
+  return sMark(uv);
+#elif SCENE_ID==2
+  return sDunes(uv);
+#elif SCENE_ID==3
+  return sRidges(uv);
+#elif SCENE_ID==4
+  return sEnd(uv);
+#else
+  return above(false,uv);
+#endif
 }
 void main(){
   vec3 acc=vec3(0.);
