@@ -361,7 +361,10 @@ const DICT = {
 } as unknown as Dict;
 
 const CSS = `
-.sl-hero{height:calc(100svh - 64px);min-height:560px;max-height:1100px;background:#050505;isolation:isolate}
+.sl-hero{height:calc(100svh - 64px);min-height:560px;max-height:1100px;background:#050505 url(${POSTER}) center/cover no-repeat;isolation:isolate}
+.sl-vid{opacity:0;transition:opacity .8s ease}
+.sl-vid.is-on{opacity:1}
+.sl-vid::-webkit-media-controls,.sl-vid::-webkit-media-controls-panel,.sl-vid::-webkit-media-controls-overlay-play-button,.sl-vid::-webkit-media-controls-start-playback-button{display:none!important;-webkit-appearance:none;opacity:0!important}
 .sl-shade{background:radial-gradient(ellipse 60% 45% at 50% 46%,rgba(10,9,8,.32),rgba(10,9,8,0) 70%)}
 .sl-set{opacity:0;transform:translateY(calc(-50% + 14px));transition:opacity 1.1s ease,transform 1.4s cubic-bezier(.22,1,.36,1);text-shadow:0 1px 18px rgba(10,9,8,.35)}
 .sl-hero.is-set .sl-set{opacity:1;transform:translateY(-50%)}
@@ -390,16 +393,27 @@ export default function SintulusLaunch({ locale }: { locale: Loc; model?: string
   const hero = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
 
-  // Film: a looping backdrop, so the title stands at once. Reduced motion shows the poster.
+  // Film: a looping backdrop, so the title stands at once. The still sits behind it and the video
+  // only fades in once it really plays, so a browser that blocks autoplay (iOS low power mode)
+  // shows the still instead of its play button; the first touch or scroll starts it then.
+  // Reduced motion keeps the still.
   useEffect(() => {
     const h = hero.current, v = video.current;
-    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (v) {
-      v.muted = true;
-      if (reduced) v.pause();
-      else v.play()?.catch(() => {});
-    }
     h?.classList.add("is-set");
+    if (!v) return;
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const on = () => v.classList.add("is-on");
+    const kicks = ["pointerdown", "touchstart", "scroll", "keydown"] as const;
+    const stop = () => kicks.forEach((k) => window.removeEventListener(k, kick));
+    const kick = () => { v.play()?.then(stop, () => {}); };
+    v.muted = true;
+    v.defaultMuted = true;
+    v.setAttribute("muted", "");
+    v.addEventListener("playing", on);
+    if (reduced) { v.pause(); return () => v.removeEventListener("playing", on); }
+    if (!v.paused && v.readyState > 2) on();
+    v.play()?.catch(() => kicks.forEach((k) => window.addEventListener(k, kick, { passive: true })));
+    return () => { v.removeEventListener("playing", on); stop(); };
   }, []);
 
   // Line drawings, reveals, roadmap line and the section nav's scroll-spy.
@@ -527,10 +541,8 @@ export default function SintulusLaunch({ locale }: { locale: Loc; model?: string
           <section ref={hero} className="sl-hero relative overflow-hidden" aria-labelledby="sl-title" style={{ color: PAPER }}>
             <video
               ref={video}
-              className="absolute inset-0 h-full w-full object-cover"
-              style={{ background: "#050505" }}
+              className="sl-vid absolute inset-0 h-full w-full object-cover"
               src={VIDEO}
-              poster={POSTER}
               muted
               playsInline
               autoPlay
