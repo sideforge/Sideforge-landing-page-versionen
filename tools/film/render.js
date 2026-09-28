@@ -5,6 +5,7 @@ const { chromium } = require('playwright');
 const { spawn } = require('child_process');
 const [,, name, out] = process.argv;
 const FPS = 25, FF = process.env.FFMPEG || 'ffmpeg';
+const CRF = name === 'sintulus' ? '24' : '19';   // the Sintulus loop is a backdrop that keeps playing: keep it light
 async function frames(p, url, dur, ff, label) {
   await p.goto(url);
   await p.waitForFunction(() => window.ready, null, { timeout: 60000 });
@@ -20,7 +21,7 @@ async function frames(p, url, dur, ff, label) {
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const p = await b.newPage({ viewport: { width: 1600, height: 900 } });
-  const ff = spawn(FF, ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-i', '-', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '19', '-preset', 'slow', '-movflags', '+faststart', out]);
+  const ff = spawn(FF, ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-i', '-', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', CRF, '-preset', 'slow', '-movflags', '+faststart', out]);
   if (name !== 'lake') await frames(p, `http://localhost:8766/tools/film/film.html?f=${name}`, null, ff, name);
   if (name === 'ai' || name === 'lake') await frames(p, 'http://localhost:8766/tools/film/lake.html', null, ff, 'lake');
   ff.stdin.end(); await new Promise(r => ff.on('close', r));
