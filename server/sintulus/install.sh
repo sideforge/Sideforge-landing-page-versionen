@@ -34,8 +34,10 @@ command -v node >/dev/null || die "node fehlt"
 command -v curl >/dev/null || die "curl fehlt"
 
 # ---------- find the Next.js app ----------
-grep_src() { grep -rls --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git \
-  --include='*.tsx' --include='*.jsx' --include='*.ts' --include='*.js' "$@"; }
+# source files only: skip dependencies, builds and build backups (.next, .next.prev-*, …)
+grep_src() { grep -rls --exclude-dir=node_modules --exclude-dir='.next*' --exclude-dir=.git --exclude-dir=.turbo \
+  --exclude-dir=.cache --exclude-dir=out --exclude-dir=dist --exclude-dir='*.sintulus-backup-*' \
+  --include='*.tsx' --include='*.jsx' --include='*.ts' "$@"; }
 is_app() { [ -f "$1/package.json" ] && grep -q '"next"' "$1/package.json" && [ -n "$(grep_src -F "$MARK" "$1" 2>/dev/null | head -1)" ]; }
 ROOT=""
 for d in "${SF_ROOT:-}" "$PWD" /home/joel/webserver-sideforge /home/*/webserver-sideforge* /home/*/* /var/www/* /srv/* /opt/*; do
