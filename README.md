@@ -72,3 +72,13 @@ The pages are framework-free on purpose so they can be reviewed as-is. To move t
 ## SideAI hero (`/en/ai`)
 
 The live lake shader is replaced by the SideAI film (`assets/video/ai.mp4`, last frame `ai-end.jpg`). `ai/index.html` previews it with a **Before / After** switch (`?v=old` starts on the current live hero). **Integration:** in the hero component, render a muted, inline, autoplaying `<video>` with that file instead of the canvas, and show the title when the video ends (see `assets/js/lh.js`); the palettes and phase buttons are no longer needed.
+
+## Sintulus 6 on the live server (`server/sintulus/`)
+
+`install.sh` swaps the live `/<locale>/sintulus` page for this layout, inside the site's own nav and footer (`PublicShell`), translated into all six locales:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/sideforge/Sideforge-landing-page-versionen/claude/wizardly-brahmagupta-bnlg2h/server/sintulus/install.sh | bash
+```
+
+It finds the Next.js app, writes `SintulusLaunch.tsx` next to the shared model page, points the Sintulus route at it, puts the deep-water loop in `public/media/`, backs everything up (including `.next`), builds, and restarts the service. A failed build restores the old state automatically. `--check` only shows the change; `--rollback` undoes the last install.
