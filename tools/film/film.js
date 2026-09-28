@@ -166,16 +166,17 @@
   var FILMS = {
     home: { end: "home", shots: [[M.COPPER, "Everything"], [M.FELT, "for your"], [M.PAINT, "next"], [M.GRAPHITE, "project."]] },
     venura: { end: "venura", shots: [[M.ICE, "Think"], [M.MUD, "deeper,"], [M.MOSS, "stay"], [M.SLATE, "longer."]] },
-    sintulus: { end: "sintulus", shots: [[M.SLATE, "Work"], [M.COPPER, "that runs"], [M.ICE, "for hours."]] },
+    // Sintulus is only the deep water: no shots, no rise, a seamless loop of `loop` seconds
+    sintulus: { end: "sintulus", shots: [], loop: 12 },
     // the SideAI film ends on the lake, which tools/film/lake.html renders and the render script appends
     ai: { end: null, shots: [[M.PAINT, "A day,"], [M.MOSS, "in sixty"], [M.GRAPHITE, "seconds."]] }
   };
-  var BEAT = 0.92, LEAD = 0.3, GAP = 0.28, END = 4.6;
+  var BEAT = 0.92, LEAD = 0.3, GAP = 0.28, END = 4.6, XFADE = 2;
 
   function Film(name) {
     var f = FILMS[name];
     this.f = f;
-    this.dur = LEAD + f.shots.length * BEAT + GAP + (f.end ? END : 0);
+    this.dur = f.loop || LEAD + f.shots.length * BEAT + GAP + (f.end ? END : 0);
     var cv = document.querySelector("canvas");
     var gl = cv.getContext("webgl", { preserveDrawingBuffer: true, antialias: false });
     var sh = function (type, src) { var s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
@@ -194,6 +195,7 @@
     var gl = this.gl, f = this.f, n = f.shots.length;
     gl.viewport(0, 0, this.cv.width, this.cv.height);
     gl.uniform2f(this.u("uRes"), this.cv.width, this.cv.height);
+    if (f.loop) return this.loop(t);
     gl.uniform1f(this.u("uT"), t);
     var shot = -1, local = 0, end = 0, endK = 0, word = "", seed = 0, arc = 0.05;
     var s = (t - LEAD) / BEAT;
@@ -217,6 +219,26 @@
     var H = this.cv.clientHeight;
     w.style.top = (H * (0.5 - arc) - H * 0.012 * local) + "px";
     w.style.transform = "translate(-50%, -100%) scale(" + (1 + 0.035 * local).toFixed(4) + ")";
+  };
+  // a loop is the closing image alone, already risen; the XFADE seconds past its end are
+  // blended over its first frames, so the jump from the last frame back to 0 is invisible
+  Film.prototype.loop = function (t) {
+    var gl = this.gl, L = this.f.loop, self = this;
+    function draw(s) { gl.uniform1f(self.u("uT"), s); gl.uniform1f(self.u("uLocal"), s + 3.0); gl.drawArrays(gl.TRIANGLES, 0, 3); }
+    gl.uniform1f(this.u("uEnd"), 1);
+    gl.uniform1f(this.u("uEndK"), 1);
+    gl.uniform1f(this.u("uFade"), 1);
+    gl.disable(gl.BLEND);
+    if (t < XFADE) {
+      draw(t + L);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.CONSTANT_ALPHA, gl.ONE_MINUS_CONSTANT_ALPHA);
+      var k = t / XFADE; gl.blendColor(0, 0, 0, k * k * (3 - 2 * k));
+    }
+    draw(t);
+    gl.disable(gl.BLEND);
+    gl.finish();
+    this.word.textContent = "";
   };
   function name2seed(n) { return n.length * 3.1; }
 

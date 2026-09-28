@@ -38,10 +38,10 @@ Every page opens with a short film told the way Anthropic's homepage film is tol
 | --- | --- | --- | --- |
 | Home | Everything / for your / next / project. | hammered copper, felt with a running stitch, impasto paint, pencil hatching | a dune field at the last light |
 | Venura 6.5 | Think / deeper, / stay / longer. | ice with trapped bubbles, cracked mud, moss with spore stalks, wet slate | ridge after ridge in morning haze |
-| Sintulus 6 | Work / that runs / for hours. | wet slate, copper, ice | light from deep water |
+| Sintulus 6 | — | — | only the deep water: light shafts from the surface, drifting particles, as a 12 s seamless loop |
 | SideAI `/en/ai` | A day, / in sixty / seconds. | impasto paint, moss, pencil hatching | the lake in 3D through one day, dawn to night |
 
-The films are **videos** (`assets/video/*.mp4`, 1600×900, 25 fps) — nothing heavy runs live in the browser. `assets/js/lh.js` plays the film once and sets the title when it reaches its last image; with reduced motion, or if autoplay is blocked, the last frame (`*-end.jpg`) and the title show at once.
+The films are **videos** (`assets/video/*.mp4`, 1600×900, 25 fps) — nothing heavy runs live in the browser. `assets/js/lh.js` plays the film once and sets the title when it reaches its last image (Sintulus loops instead, with the title set from the start); with reduced motion, or if autoplay is blocked, the last frame (`*-end.jpg`) and the title show at once.
 
 Everything in the films is procedural — no footage, photographs or code from Anthropic. They are made with `tools/film/`: `film.html` + `film.js` (materials, horizon, words, closing images from `endings/`), `lake.html` (the SideAI closing shot) and `render.js`, which plays a film frame by frame in headless Chromium and pipes it into ffmpeg:
 
