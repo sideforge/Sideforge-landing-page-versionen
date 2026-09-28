@@ -11,10 +11,12 @@
 #      GITHUB_TOKEN=...            (only needed while the repo is private)
 set -euo pipefail
 
-RAW="${SF_RAW:-https://raw.githubusercontent.com/sideforge/Sideforge-landing-page-versionen/claude/wizardly-brahmagupta-bnlg2h/server/sintulus}"
-SHA_MP4=77f42db955068be2e9d122821b6909f4d8365aa7c322f6e24ec7aa799c0d6596
-SHA_JPG=bdca4e36d1a5f187c90dfea127ec8755ca88fbe3a4b0ad3bdb7a405a8d15dda2
-SHA_TPL=f9d34fcfa24ebc44453057d9a2cab990a9144d3c374beb3b22e8bf003f9492d0
+# Pinned to a commit so a cached branch URL can never serve an older file.
+RAW="${SF_RAW:-https://raw.githubusercontent.com/sideforge/Sideforge-landing-page-versionen/91a0e297cdfecb2b67eb1718939a01b0172432bd/server/sintulus}"
+# Git blob ids (sha1 of "blob <size>\0<content>") of the files at that commit.
+SHA_MP4=f1598cceb5254f60008d1a52be67acf6775ee435
+SHA_JPG=a4d198f614411d063f69a8b48016db9077f3a732
+SHA_TPL=faace7d02c4910cc18af403afca141c77eec9b94
 MARK='Vorschau · Modell'   # a string only the shared Venura/Sintulus page component contains
 
 say()  { printf '\033[1m» %s\033[0m\n' "$*"; }
@@ -103,8 +105,9 @@ TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 fetch() {
   local auth=(); [ -n "${GITHUB_TOKEN:-}" ] && auth=(-H "Authorization: token $GITHUB_TOKEN")
   curl -fsSL "${auth[@]}" "$RAW/$1" -o "$TMP/$1" || die "Download $RAW/$1 fehlgeschlagen (Repo privat? → kurz öffentlich machen oder GITHUB_TOKEN=… setzen)"
-  [ "$(sha256sum "$TMP/$1" | cut -d' ' -f1)" = "$2" ] || die "Prüfsumme von $1 stimmt nicht"
+  [ "$(blob_id "$TMP/$1")" = "$2" ] || die "Prüfsumme von $1 stimmt nicht"
 }
+blob_id() { { printf 'blob %s\0' "$(stat -c %s "$1")"; cat "$1"; } | sha1sum | cut -d' ' -f1; }
 say "Lade Dateien"
 fetch SintulusLaunch.tsx.tpl "$SHA_TPL"; fetch sintulus-sea.mp4 "$SHA_MP4"; fetch sintulus-sea.jpg "$SHA_JPG"
 ok "Dateien geladen und geprüft"
