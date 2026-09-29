@@ -83,8 +83,8 @@
   m(69, 1, IRON, [.03, .07, .55], [-.2, 0, 1.3, 1.5], { inv: 1, punch: 1.06 });
   s(70, 1.5, RIDGES, [6, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], { rise: .35, punch: 1.05 });
   s(71.5, .5, BLACK, [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], {});
-  // ---- 45–55 s  HERO: the mark in hammered copper rises out of the dark; a slow orbit
-  s(72, 16, MARK, [-.5, .42, 10, 8.6], [.18, .06, 1, 0], [0, -.18, 2.6, 0], { ease: "inout", rise: 1.6, fx: ["dust:14"], fadeOut: [86.8 * B, FINAL] });
+  // ---- 45–55 s  HERO: ridge after ridge rises out of the dark into the morning; a slow drift
+  s(72, 16, RIDGES, [.7, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], { ease: "inout", rise: 1.6, fadeOut: [86.8 * B, FINAL] });
   // ---- 55–60 s  the mark on paper
   s(88, 8, END, [1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], { ease: "lin" });
 
